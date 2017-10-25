@@ -53,6 +53,7 @@ type family AddPlaceholder (name :: Symbol) (shape :: [Nat]) (placeholders :: [(
                           ('(n2, s2) ': AddPlaceholder n1 s1 phs)
                           (TypeError ('Text "The placeholder " ':<>: 'ShowType n1 ':<>: 'Text " appears to have defined two different shapes " ':<>: 'ShowType s1 ':<>: 'Text " and " ':<>: 'ShowType s2)))
 
+-- TODO(helq): improve UnionPlaceholder, it should work like merge sort and not like bubble surt
 type family UnionPlaceholder (placeholders1 :: [(Symbol, [Nat])]) (placeholders2 :: [(Symbol, [Nat])]) where
   UnionPlaceholder '[] phs = phs
   UnionPlaceholder ('(n1, s1) ': phs1) phs2 = UnionPlaceholder phs1 (AddPlaceholder n1 s1 phs2)

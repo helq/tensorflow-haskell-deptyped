@@ -6,8 +6,8 @@
 {-# LANGUAGE GADTs #-}
 
 module TensorFlow.DepTyped.Types (
-  TensorData(TensorData),
-  encodeTensorData
+  TensorData(TensorData, unTensorData),
+  encodeTensorData,
 ) where
 
 import qualified Data.Vector as VN (Vector)
@@ -20,8 +20,7 @@ import qualified TensorFlow.Types as TF (TensorDataType, TensorData, TensorType,
 
 import           TensorFlow.DepTyped.Base (KnownNatList(natListVal), ShapeProduct)
 
-data TensorData (n :: Symbol) (s :: [Nat]) a where
-  TensorData :: (TF.TensorType a) => TF.TensorData a -> TensorData n s a
+newtype TensorData (n :: Symbol) (s :: [Nat]) a = TensorData {unTensorData :: TF.TensorData a}
 
 encodeTensorData :: forall a (name :: Symbol) (shape :: [Nat]) (n :: Nat).
                  (TF.TensorType a, ShapeProduct shape ~ n, KnownNatList shape, TF.TensorDataType VN.Vector a)
