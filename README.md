@@ -1,48 +1,26 @@
 # [tensorflow-haskell-deptyped][]
 
-Thanks for starting a project with Haskeleton! If you haven't heard of it
-before, I suggest reading the introductory blog post. You can find it here:
-<http://taylor.fausak.me/2014/03/04/haskeleton-a-haskell-project-skeleton/>.
+Hi, this repo is dedicated to experiment adding Dependent Types to [TensorFlow Haskell][].
 
-Before you get started, there are a few things that this template couldn't
-provide for you. You should:
+Beware! This code is alpha stage, the API is not stable and will not be until merged to
+the official project ([TensorFlow Haskell][]), hopefully.
 
--   Add a synopsis to `package.yaml`. It should be a short (one sentence)
-    explanation of your project.
-
--   Add a description to `package.yaml`. This can be whatever you want it to
-    be.
-
--   Add a category to `package.yaml`. A list of categories is available on
-    Hackage at <http://hackage.haskell.org/packages>.
-
--   Rename `library/Example.hs` to whatever you want your top-level module to
-    be called. Typically this is the same as your package name but in
-    `CamelCase` instead of `kebab-case`.
-
-    -   Don't forget to rename the reference to it in
-        `executable/Main.hs`!
-
--   If you are on an older version of Stack (<1.0.4), delete `package.yaml` and
-    remove `/*.cabal` from your `.gitignore`.
-
-Once you've done that, start working on your project with the Stack commands
-you know and love.
-
+### Making sure everything is alright
 ``` sh
-# Build the project.
-stack build
-
-# Run the test suite.
-stack test
-
-# Run the benchmarks.
-stack bench
-
-# Generate documentation.
-stack haddock
+stack setup
 ```
 
-Thanks again, and happy hacking!
+### Build the project.
+``` sh
+stack build
+```
 
-[tensorflow-haskell-deptyped]: https://github.com/githubuser/tensorflow-haskell-deptyped
+### Executing example
+``` sh
+stack exec -- tensorflow-haskell-deptyped
+```
+
+The example's code can be found in `executable/Main.hs`
+
+[tensorflow-haskell-deptyped]: https://github.com/helq/tensorflow-haskell-deptyped
+[TensorFlow Haskell]: https://github.com/tensorflow/haskell
