@@ -28,7 +28,8 @@ main2 = runSession $ do
       (addTensor  :: Tensor '[4,2] '[] Build Float) = multTensor `add` constant3
   run addTensor
 
-main3 :: IO (VN.Vector Float)
+--main3 :: IO (VN.Vector Float)
+main3 :: IO (Vector 4 Float)
 main3 = runSession $ do
   (a :: Placeholder "a" '[2,2] Float) <- placeholder
   (b :: Placeholder "b" '[2,2] Float) <- placeholder
