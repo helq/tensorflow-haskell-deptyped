@@ -1,22 +1,25 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE DataKinds             #-}
+{-# OPTIONS_GHC -Wno-missing-import-lists #-}
 
 module Main (main) where
 
 import           Data.Maybe (fromJust)
 import           Data.Int (Int64)
-import qualified Data.Vector as VN (Vector)
+--import qualified Data.Vector as VN (Vector)
 import           Data.Vector.Sized (Vector, fromList)
 
 import           TensorFlow.DepTyped
 
-main1 :: IO (VN.Vector Int64)
+--main1 :: IO (VN.Vector Int64)
+main1 :: IO (Vector 4 Int64)
 main1 = runSession $ do
   let (elems1 :: Vector 4 Int64) = fromJust $ fromList [1,2,3,4]
       (constant1 :: Tensor '[2,2] '[] Build Int64) = constant elems1
   run constant1
 
-main2 :: IO (VN.Vector Float)
+--main2 :: IO (VN.Vector Float)
+main2 :: IO (Vector 8 Float)
 main2 = runSession $ do
   let (elems1 :: Vector 12 Float) = fromJust $ fromList [1,2,3,4,1,2,3,4,1,2,3,4]
       (elems2 :: Vector 6 Float)  = fromJust $ fromList [5,6,7,8,9,10]
@@ -43,7 +46,8 @@ main3 = runSession $ do
 -- two different placeholders and the system will type check but it will fail
 -- on runtime
 
-fails :: IO (VN.Vector Float)
+--fails :: IO (VN.Vector Float)
+fails :: IO (Vector 4 Float)
 fails = runSession $ do
   (a :: Placeholder "a" '[2,2] Float) <- placeholder
   (b :: Placeholder "b" '[2,2] Float) <- placeholder

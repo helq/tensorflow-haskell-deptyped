@@ -1,4 +1,4 @@
-name:           tensorflow-haskell-deptyped
+name:           tensorflow-deptyped
 version:        0.0.1
 synopsis:       Reexporting TensorFlow Haskell with dependent typed functions
 description:    Securing tensorflow code using dependent types.
@@ -39,6 +39,8 @@ library
     , TensorFlow.DepTyped.Types
     , TensorFlow.DepTyped.Session
     , TensorFlow.DepTyped.Ops
+    , TensorFlow.DepTyped.Output
+    , TensorFlow.DepTyped.Variable
   default-language: Haskell2010
 
 executable tensorflow-haskell-deptyped
@@ -48,7 +50,7 @@ executable tensorflow-haskell-deptyped
   ghc-options: -Wall -rtsopts -threaded -with-rtsopts=-N
   build-depends:
       base >= 4.9 && < 5
-    , tensorflow-haskell-deptyped
+    , tensorflow-deptyped
     , bytestring
     , vector
     , vector-sized
