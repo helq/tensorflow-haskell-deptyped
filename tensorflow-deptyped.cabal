@@ -41,6 +41,7 @@ library
     , TensorFlow.DepTyped.Ops
     , TensorFlow.DepTyped.Output
     , TensorFlow.DepTyped.Variable
+    , TensorFlow.DepTyped.Minimize
   default-language: Haskell2010
 
 executable tensorflow-haskell-deptyped

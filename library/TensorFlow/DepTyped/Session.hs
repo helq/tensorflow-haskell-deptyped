@@ -17,7 +17,7 @@ import           Data.Maybe (fromMaybe)
 
 import qualified TensorFlow.Tensor as TF (Feed)
 import qualified TensorFlow.Session as TF (runWithFeeds, run, SessionT)
-import qualified TensorFlow.Types as TF (TensorDataType)
+import qualified TensorFlow.Types as TF (TensorDataType, Scalar)
 import           Control.Monad.IO.Class (MonadIO)
 import qualified Foreign.Storable as FS (Storable)
 
@@ -27,18 +27,21 @@ import           TensorFlow.DepTyped.Tensor (Tensor(Tensor), FeedList(NilFeedLis
 import           TensorFlow.DepTyped.Output (ControlNode(ControlNode))
 import           TensorFlow.DepTyped.Base (ShapeProduct)
 
-class Runnable (flphs :: [(Symbol, [Nat])]) tt rs a | tt -> a, rs -> a where
-  runWithFeeds :: MonadIO m => FeedList flphs a -> tt -> TF.SessionT m rs
-  run :: (MonadIO m, flphs ~ '[]) => tt -> TF.SessionT m rs
+-- TODO(helq): find a way to created "dependent typed" version of run_ and runWithFeeds_
+
+-- TODO(helq): add instances for (,), (,,), so on
+class Runnable (feedlist_phs :: [(Symbol, [Nat])]) tt rs a | tt -> a, rs -> a where
+  runWithFeeds :: MonadIO m => FeedList feedlist_phs a -> tt -> TF.SessionT m rs
+  run :: (MonadIO m, feedlist_phs ~ '[]) => tt -> TF.SessionT m rs
 
 instance (FS.Storable a,
           TF.TensorDataType VN.Vector a,
-          SortPlaceholderList phs1 ~ phs2)
-       => Runnable phs1 (Tensor shape phs2 v a) (VN.Vector a) a where
+          SortPlaceholderList feedlist_phs ~ phs)
+       => Runnable feedlist_phs (Tensor shape phs v a) (VN.Vector a) a where
   runWithFeeds feeds (Tensor t) = TF.runWithFeeds (getListFeeds feeds) t
   run (Tensor t) = TF.run t
 
-instance SortPlaceholderList phs1 ~ phs2 => Runnable phs1 (ControlNode phs2) () () where
+instance SortPlaceholderList feedlist_phs ~ phs => Runnable feedlist_phs (ControlNode phs) () () where
   runWithFeeds feeds (ControlNode cn) = TF.runWithFeeds (getListFeeds feeds) cn
   run (ControlNode cn) = TF.run cn
 
@@ -48,12 +51,19 @@ instance (FS.Storable a,
           TF.TensorDataType VN.Vector a,
           KnownNat n,
           ShapeProduct shape ~ n,
-          SortPlaceholderList phs1 ~ phs2)
-       => Runnable phs1 (Tensor shape phs2 v a) (Vector n a) a where
+          SortPlaceholderList feedlist_phs ~ phs)
+       => Runnable feedlist_phs (Tensor shape phs v a) (Vector n a) a where
   runWithFeeds feeds (Tensor t) = fromMaybe (error "possible size mismatch between output vector and tensor shape, this should never happen :S")
                                   . toSized <$> TF.runWithFeeds (getListFeeds feeds) t
   run (Tensor t) = fromMaybe (error "possible size mismatch between output vector and tensor shape, this should never happen :S")
                      . toSized <$> TF.run t
+
+instance (FS.Storable a,
+          TF.TensorDataType VN.Vector a,
+          SortPlaceholderList feedlist_phs ~ phs)
+       => Runnable feedlist_phs (Tensor '[1] phs v a) (TF.Scalar a) a where
+  runWithFeeds feeds (Tensor t) = TF.runWithFeeds (getListFeeds feeds) t
+  run (Tensor t) = TF.run t
 
 getListFeeds :: FeedList phs a -> [TF.Feed]
 getListFeeds NilFeedList     = []

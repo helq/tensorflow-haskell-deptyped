@@ -74,6 +74,23 @@ main5 = runSession $ do
       (constant1 :: Tensor '[2,2] '[] Build Int32) = constant elems
   run $ oneHot_ (Proxy :: Proxy 5) 1 0 constant1
 
+main6 :: IO (Vector 1 Double)
+main6 = runSession $ do
+  let elems = fromJust $ fromList [3,4,3,7,4,4,4,6,3,13,15,0,4,2,6,0,6,8,12,15,12,11,5,0,11,14,10,13,12,11] -- from uniform distribution [0..15]
+      (constant1 :: Tensor '[2,5,3] '[] Build Double) = constant elems
+  run $ reduceMean constant1
+
+main7 :: IO (Vector 4 Double)
+main7 = runSession $ do
+  let (logits :: Tensor '[4,3] '[] Build Double) = constant . fromJust $ fromList [14,4,12,1,13,13,4,2,9,10,0,5]
+      (labels :: Tensor '[4,3] '[] Build Double) = constant . fromJust $ fromList [1,0,0,0,1,0,1,0,0,1,0,0]
+  run $ fst $ softmaxCrossEntropyWithLogits logits labels
+
+main8 :: IO (Vector 12 Double)
+main8 = runSession $ do
+  (randomValues :: Tensor '[4,3] '[] Value Double) <- truncatedNormal
+  run randomValues
+
 main :: IO ()
 main = do
   main1 >>= print
@@ -81,4 +98,7 @@ main = do
   main3 >>= print
   main4 >>= print
   main5 >>= print
+  main6 >>= print
+  main7 >>= print
+  main8 >>= print
   fails >>= print
