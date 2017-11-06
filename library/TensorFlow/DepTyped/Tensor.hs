@@ -10,7 +10,6 @@
 {-# LANGUAGE ConstraintKinds       #-}
 
 module TensorFlow.DepTyped.Tensor (
-  KnownNatList(natListVal),
   AddPlaceholder,
   UnionPlaceholder,
   PlaceholderNotInList,
@@ -28,12 +27,12 @@ import           GHC.TypeLits (Nat, Symbol, TypeError, ErrorMessage(Text, ShowTy
 import           Data.Singletons.Prelude (If, type (:<), type (:>))
 import           Data.Kind (Constraint)
 
-import           TensorFlow.Core (Build, Value, MonadBuild)
+import           TensorFlow.Build (Build, MonadBuild)
+import           TensorFlow.Tensor (Value)
 import qualified TensorFlow.Tensor as TF (Feed, feed, Tensor, render)
 import qualified TensorFlow.Types as TF (TensorType)
 
 import           TensorFlow.DepTyped.Types (TensorData(TensorData))
-import           TensorFlow.DepTyped.Base (KnownNatList(natListVal))
 
 data Tensor (s :: [Nat]) (p :: [(Symbol, [Nat])]) v a where
   Tensor :: (TF.TensorType a) => TF.Tensor v a -> Tensor s p v a

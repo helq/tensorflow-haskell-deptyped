@@ -5,9 +5,11 @@
 module Main (main) where
 
 import           Data.Maybe (fromJust)
-import           Data.Int (Int64)
+import           Data.Int (Int64, Int32)
 --import qualified Data.Vector as VN (Vector)
 import           Data.Vector.Sized (Vector, fromList)
+
+import           Data.Proxy (Proxy(Proxy))
 
 import           TensorFlow.DepTyped
 
@@ -57,9 +59,26 @@ fails = runSession $ do
       (inputB :: TensorData "b" [2,2] Float) = encodeTensorData . fromJust $ fromList [5,6,7,8]
   runWithFeeds (feed b inputB :~~ feed a inputA :~~ NilFeedList) result
 
+main4 :: IO (Vector 4 Double, Vector 4 Double)
+main4 = runSession $ do
+  let elems = fromJust $ fromList [1,2,3,4]
+      (constant1 :: Tensor '[1,4] '[] Build Double) = constant elems
+      (constant2 :: Tensor '[2,2] '[] Build Double) = constant elems
+  logits1 <- run $ softmax constant1
+  logits2 <- run $ softmax constant2
+  return (logits1, logits2)
+
+main5 :: IO (Vector 20 Int32)
+main5 = runSession $ do
+  let elems = fromJust $ fromList [1,2,3,4]
+      (constant1 :: Tensor '[2,2] '[] Build Int32) = constant elems
+  run $ oneHot_ (Proxy :: Proxy 5) 1 0 constant1
+
 main :: IO ()
 main = do
   main1 >>= print
   main2 >>= print
   main3 >>= print
+  main4 >>= print
+  main5 >>= print
   fails >>= print
