@@ -10,6 +10,7 @@ module TensorFlow.DepTyped.Ops (
   constant,
   placeholder,
   add,
+  mul,
   matMul,
   argMax,
   softmax,
@@ -24,7 +25,7 @@ module TensorFlow.DepTyped.Ops (
 
 import           GHC.TypeLits (Nat, Symbol, KnownNat, natVal, TypeError, ErrorMessage(Text, ShowType, (:<>:)), type (-))
 import           Data.Proxy (Proxy(Proxy))
-import           Data.Promotion.Prelude (type Length)
+import           Data.Promotion.Prelude (type Length, type Reverse, type If, type (:||), type (:==))
 
 import           Data.Vector.Sized (Vector, toList)
 import           Data.Int (Int8, Int16, Int32, Int64)
@@ -34,7 +35,7 @@ import           Data.ByteString (ByteString)
 
 import qualified TensorFlow.Ops as TF (constant, add, matMul, placeholder, argMax, scalar,
                                        softmax, oneHot, reduceMean, softmaxCrossEntropyWithLogits,
-                                       equal, truncatedNormal, vector)
+                                       equal, truncatedNormal, vector, mul)
 import qualified TensorFlow.Types as TF (TensorType, Shape(Shape), type OneOf)
 --import qualified TensorFlow.Tensor as TF (Tensor)
 import           TensorFlow.Tensor (Value)
@@ -43,23 +44,45 @@ import           TensorFlow.Build (Build, MonadBuild)
 import           TensorFlow.DepTyped.Base (KnownNatList(natListVal), ShapeProduct)
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor), Placeholder, UnionPlaceholder)
 
-constant :: forall a (s :: [Nat]) (n :: Nat).
+constant :: forall (s :: [Nat]) (n :: Nat) a.
             (TF.TensorType a, ShapeProduct s ~ n, KnownNatList s)
          => Vector n a
          -> Tensor s '[] Build a
 constant v = Tensor $ TF.constant shape (toList v)
   where shape = TF.Shape . fmap fromInteger $ natListVal (Proxy :: Proxy s)
 
-placeholder :: forall a (shape :: [Nat]) (name :: Symbol) (n :: Nat) m.
-               (TF.TensorType a, ShapeProduct shape ~ n, KnownNatList shape, MonadBuild m)
+placeholder :: forall (name :: Symbol) (shape :: [Nat]) a m.
+               (TF.TensorType a, KnownNatList shape, MonadBuild m)
             => m (Placeholder name shape a)
 placeholder = Tensor <$> TF.placeholder shape
   where shape = TF.Shape . fmap fromInteger $ natListVal (Proxy :: Proxy shape)
 
-add :: forall a (shape :: [Nat]) (phs1 :: [(Symbol, [Nat])]) (phs2 :: [(Symbol, [Nat])]) v1 v2.
+
+type family BroadcastShapes (shape1::[Nat]) (shape2::[Nat]) :: [Nat] where
+  BroadcastShapes shape1 shape2 = Reverse (BroadcastShapes' (Reverse shape1) (Reverse shape2) shape1 shape2)
+
+type family BroadcastShapes' (revshape1::[Nat]) (revshape2::[Nat]) (shape1::[Nat]) (shape2::[Nat]) :: [Nat] where
+  BroadcastShapes' '[] '[] _ _ = '[]
+  BroadcastShapes' '[] shape2 _ _ = shape2
+  BroadcastShapes' shape1 '[] _ _ = shape1
+  BroadcastShapes' (n:shape1) (m:shape2) origshape1 origshape2 =
+    If (n:==1 :|| n:==m)
+        (m : BroadcastShapes' shape1 shape2 origshape1 origshape2)
+        (If (m:==1)
+             (n : BroadcastShapes' shape1 shape2 origshape1 origshape2)
+             (TypeError ('Text "Error: shapes " ':<>: 'ShowType origshape1
+                            ':<>: 'Text " and " ':<>: 'ShowType origshape2
+                            ':<>: 'Text " cannot be broadcast. For more info in broadcasting rules: "
+                            ':<>: 'Text "https://docs.scipy.org/doc/numpy/user/basics.broadcasting.html")))
+
+add :: forall (shape1 :: [Nat]) (shape2 :: [Nat]) (phs1 :: [(Symbol, [Nat])]) (phs2 :: [(Symbol, [Nat])]) v1 v2 a.
        TF.OneOf '[(Complex Double), (Complex Float), ByteString, Int16, Int32, Int64, Int8, Word16, Word8, Double, Float] a
-       => Tensor shape phs1 v1 a -> Tensor shape phs2 v2 a -> Tensor shape (UnionPlaceholder phs1 phs2) Build a
+    => Tensor shape1 phs1 v1 a -> Tensor shape2 phs2 v2 a -> Tensor (BroadcastShapes shape1 shape2) (UnionPlaceholder phs1 phs2) Build a
 add (Tensor t1) (Tensor t2) = Tensor (t1 `TF.add` t2)
+
+mul :: TF.OneOf '[(Complex Double), (Complex Float), Int16, Int32, Int64, Int8, Word16, Word8, Double, Float] a
+    => Tensor shape1 phs1 v1 a -> Tensor shape2 phs2 v2 a -> Tensor (BroadcastShapes shape1 shape2) (UnionPlaceholder phs1 phs2) Build a
+mul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.mul` t2)
 
 matMul :: (TF.OneOf '[(Complex Double), (Complex Float), Int32, Word16, Double, Float] a)
        => Tensor '[i,n] p Build a -> Tensor '[n,o] q Build a -> Tensor '[i,o] (UnionPlaceholder p q) Build a
@@ -72,8 +95,8 @@ type family RemoveAxisFromShape (idx::Nat) (shape::[Nat]) :: [Nat] where
 type family RemoveAxisFromShape' (idx::Nat) (shape::[Nat]) (idxorig::Nat) (shapeorig::[Nat]) :: [Nat] where
   RemoveAxisFromShape' _ '[]     idx shape = TypeError ('Text "Index " ':<>: 'ShowType idx ':<>:
                                                         'Text " is out of bounds of shape " ':<>: 'ShowType shape ':<>:
-                                                        'Text ". Valid values for index [" ':<>:
-                                                        'ShowType 0 ':<>: 'Text ".." ':<>: 'ShowType (Length shape) ':<>: 'Text "]" )
+                                                        'Text ". Valid values for index [0.." ':<>:
+                                                        'ShowType (Length shape) ':<>: 'Text "]" )
   RemoveAxisFromShape' 0 (_:shs) _ _ = shs
   RemoveAxisFromShape' n (sh:shs) idx shape = sh : RemoveAxisFromShape' (n-1) shs idx shape
 
@@ -136,7 +159,7 @@ softmaxCrossEntropyWithLogits (Tensor feats) (Tensor labels) = (Tensor loss, Ten
   where (loss, backprop) = TF.softmaxCrossEntropyWithLogits feats labels
 
 equal :: (TF.OneOf '[(Complex Double), (Complex Float), Bool, ByteString, Int16, Int32, Int64, Int8, Word16, Word8, Double, Float] a)
-      => Tensor shape phs1 v'1 a -> Tensor shape phs2 v'2 a -> Tensor shape (UnionPlaceholder phs1 phs2) Build Bool
+      => Tensor shape1 phs1 v'1 a -> Tensor shape2 phs2 v'2 a -> Tensor (BroadcastShapes shape1 shape2) (UnionPlaceholder phs1 phs2) Build Bool
 equal (Tensor t1) (Tensor t2) = Tensor (t1 `TF.equal` t2)
 
 truncatedNormal :: forall (shape::[Nat]) a m.

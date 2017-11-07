@@ -91,6 +91,19 @@ main8 = runSession $ do
   (randomValues :: Tensor '[4,3] '[] Value Double) <- truncatedNormal
   run randomValues
 
+-- testing broadcast rules
+main9 :: IO (Vector 24 Float, Vector 24 Float)
+main9 = runSession $ do
+  let (constant1  :: Tensor   '[4,3] '[] Build Float) = constant . fromJust $ fromList [1,2,3,4,1,2,3,4,1,2,3,4]
+      (constant2  :: Tensor '[2,1,3] '[] Build Float) = constant . fromJust $ fromList [1,-1,1,-1,1,-1]
+      (mulTensor1 :: Tensor '[2,4,3] '[] Build Float) = constant1 `mul` constant2
+  mulresult1 <- run mulTensor1
+  let (constant3  :: Tensor '[1,1,4,3] '[] Build Float) = constant . fromJust $ fromList [1,2,3,4,1,2,3,4,1,2,3,4]
+      (constant4  :: Tensor   '[2,1,3] '[] Build Float) = constant . fromJust $ fromList [1,-1,1,-1,1,-1]
+      (mulTensor2 :: Tensor '[1,2,4,3] '[] Build Float) = constant3 `mul` constant4
+  mulresult2 <- run mulTensor2
+  return (mulresult1, mulresult2)
+
 main :: IO ()
 main = do
   main1 >>= print
@@ -101,4 +114,5 @@ main = do
   main6 >>= print
   main7 >>= print
   main8 >>= print
+  main9 >>= print
   fails >>= print

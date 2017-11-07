@@ -1,6 +1,6 @@
 module TensorFlow.DepTyped (
   KnownNatList(natListVal),
-  constant, placeholder, add, matMul, argMax, softmax, scalar, oneHot,
+  constant, placeholder, add, mul, matMul, argMax, softmax, scalar, oneHot,
   oneHot_, reduceMean, softmaxCrossEntropyWithLogits, equal, truncatedNormal,
   run, runWithFeeds,
   Tensor, Placeholder, Feed(Feed), FeedList(NilFeedList,(:~~)), render, feed,
@@ -12,7 +12,7 @@ module TensorFlow.DepTyped (
   Session, runSession
 ) where
 
-import TensorFlow.DepTyped.Ops (constant, placeholder, add, matMul, argMax, softmax, scalar, oneHot,
+import TensorFlow.DepTyped.Ops (constant, placeholder, add, mul, matMul, argMax, softmax, scalar, oneHot,
                                 oneHot_, reduceMean, softmaxCrossEntropyWithLogits, equal, truncatedNormal)
 import TensorFlow.DepTyped.Session (run, runWithFeeds)
 import TensorFlow.DepTyped.Tensor (Tensor, Placeholder, Feed(Feed), FeedList(NilFeedList,(:~~)), render, feed)
