@@ -24,10 +24,12 @@ import           Data.Proxy (Proxy(Proxy))
 
 newtype Variable (shape :: [Nat]) a = Variable { unVariable :: TF.Variable a }
 
-initializedVariable :: (TF.TensorType a, TF.MonadBuild m) => Tensor shape '[] v a -> m (Variable shape a)
+initializedVariable :: forall (shape::[Nat]) a v m.
+                       (TF.TensorType a, TF.MonadBuild m)
+                    => Tensor shape '[] v a -> m (Variable shape a)
 initializedVariable (Tensor t) = Variable <$> TF.initializedVariable t
 
-zeroInitializedVariable :: forall a (shape :: [Nat]) m .
+zeroInitializedVariable :: forall (shape :: [Nat]) a m.
                            (TF.MonadBuild m, TF.TensorType a, Num a, KnownNatList shape) => m (Variable shape a)
 zeroInitializedVariable = Variable <$> TF.zeroInitializedVariable shape
   where shape = TF.Shape . fmap fromInteger $ natListVal (Proxy :: Proxy shape)

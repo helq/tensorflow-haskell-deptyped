@@ -20,7 +20,10 @@ module TensorFlow.DepTyped.Ops (
   reduceMean,
   softmaxCrossEntropyWithLogits,
   equal,
-  truncatedNormal
+  truncatedNormal,
+  relu,
+  sub,
+  cast
 ) where
 
 import           GHC.TypeLits (Nat, Symbol, KnownNat, natVal, TypeError, ErrorMessage(Text, ShowType, (:<>:)), type (-))
@@ -35,7 +38,7 @@ import           Data.ByteString (ByteString)
 
 import qualified TensorFlow.Ops as TF (constant, add, matMul, placeholder, argMax, scalar,
                                        softmax, oneHot, reduceMean, softmaxCrossEntropyWithLogits,
-                                       equal, truncatedNormal, vector, mul)
+                                       equal, truncatedNormal, vector, mul, relu, sub, cast)
 import qualified TensorFlow.Types as TF (TensorType, Shape(Shape), type OneOf)
 --import qualified TensorFlow.Tensor as TF (Tensor)
 import           TensorFlow.Tensor (Value)
@@ -59,6 +62,9 @@ placeholder = Tensor <$> TF.placeholder shape
 
 
 type family BroadcastShapes (shape1::[Nat]) (shape2::[Nat]) :: [Nat] where
+  BroadcastShapes shape shape = shape
+  BroadcastShapes '[1] shape2 = shape2 -- this base cases are necessary to allow things like randomParam in mnist-deptyped example
+  BroadcastShapes shape1 '[1] = shape1
   BroadcastShapes shape1 shape2 = Reverse (BroadcastShapes' (Reverse shape1) (Reverse shape2) shape1 shape2)
 
 type family BroadcastShapes' (revshape1::[Nat]) (revshape2::[Nat]) (shape1::[Nat]) (shape2::[Nat]) :: [Nat] where
@@ -80,12 +86,19 @@ add :: forall (shape1 :: [Nat]) (shape2 :: [Nat]) (phs1 :: [(Symbol, [Nat])]) (p
     => Tensor shape1 phs1 v1 a -> Tensor shape2 phs2 v2 a -> Tensor (BroadcastShapes shape1 shape2) (UnionPlaceholder phs1 phs2) Build a
 add (Tensor t1) (Tensor t2) = Tensor (t1 `TF.add` t2)
 
+sub :: forall (shape1 :: [Nat]) (shape2 :: [Nat]) (phs1 :: [(Symbol, [Nat])]) (phs2 :: [(Symbol, [Nat])]) v1 v2 a.
+       TF.OneOf '[(Complex Double), (Complex Float), Int32, Int64, Word16, Double, Float] a
+    => Tensor shape1 phs1 v1 a -> Tensor shape2 phs2 v2 a -> Tensor (BroadcastShapes shape1 shape2) (UnionPlaceholder phs1 phs2) Build a
+sub (Tensor t1) (Tensor t2) = Tensor (t1 `TF.sub` t2)
+
 mul :: TF.OneOf '[(Complex Double), (Complex Float), Int16, Int32, Int64, Int8, Word16, Word8, Double, Float] a
     => Tensor shape1 phs1 v1 a -> Tensor shape2 phs2 v2 a -> Tensor (BroadcastShapes shape1 shape2) (UnionPlaceholder phs1 phs2) Build a
 mul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.mul` t2)
 
-matMul :: (TF.OneOf '[(Complex Double), (Complex Float), Int32, Word16, Double, Float] a)
-       => Tensor '[i,n] p Build a -> Tensor '[n,o] q Build a -> Tensor '[i,o] (UnionPlaceholder p q) Build a
+matMul :: forall (shapeout::[Nat]) (n::Nat) a (i::Nat) (o::Nat) (p::[(Symbol,[Nat])]) (q::[(Symbol,[Nat])]) v'1 v'2.
+          (TF.OneOf '[(Complex Double), (Complex Float), Int32, Word16, Double, Float] a,
+           shapeout ~ '[i,o])
+       => Tensor '[i,n] p v'1 a -> Tensor '[n,o] q v'2 a -> Tensor '[i,o] (UnionPlaceholder p q) Build a
 matMul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.matMul` t2)
 
 
@@ -100,14 +113,15 @@ type family RemoveAxisFromShape' (idx::Nat) (shape::[Nat]) (idxorig::Nat) (shape
   RemoveAxisFromShape' 0 (_:shs) _ _ = shs
   RemoveAxisFromShape' n (sh:shs) idx shape = sh : RemoveAxisFromShape' (n-1) shs idx shape
 
-argMax :: (KnownNat n,
+argMax :: forall (n::Nat) (output_shape::[Nat]) (shape::[Nat]) (phs::[(Symbol,[Nat])]) t output_type v.
+          (KnownNat n,
            output_shape ~ RemoveAxisFromShape n shape,
            TF.OneOf '[(Complex Double), (Complex Float), Int16, Int32, Int64, Int8, Word16, Word8, Double, Float] t,
            TF.OneOf '[Int32, Int64] output_type)
-       => Tensor shape phs v t
-       -> Proxy n
+       => Proxy n
+       -> Tensor shape phs v t
        -> Tensor output_shape phs Build output_type
-argMax (Tensor t) p = Tensor $ TF.argMax t (TF.scalar (fromInteger $ natVal p :: Int64))
+argMax p (Tensor t) = Tensor $ TF.argMax t (TF.scalar (fromInteger $ natVal p :: Int64))
 
 softmax :: (TF.OneOf '[Word16, Double, Float] t, KnownNat batchSize, KnownNat outs)
         => Tensor '[batchSize, outs] phs v t
@@ -145,7 +159,8 @@ oneHot_ :: (TF.TensorType t,
         -> Tensor output_shape phs Build t
 oneHot_ p t1 t2 = oneHot p (scalar t1) (scalar t2)
 
-reduceMean :: TF.OneOf '[Double, Float, Complex Float, Complex Double] a
+reduceMean :: forall (shape::[Nat]) (phs::[(Symbol,[Nat])]) a v.
+              TF.OneOf '[Double, Float, Complex Float, Complex Double] a
            => Tensor shape phs v a
            -> Tensor '[1] phs Build a
 reduceMean (Tensor t) = Tensor $ TF.reduceMean t
@@ -169,3 +184,11 @@ truncatedNormal :: forall (shape::[Nat]) a m.
                 => m (Tensor shape '[] Value a)
 truncatedNormal = Tensor <$> TF.truncatedNormal (TF.vector shape_)
   where shape_ = fmap fromInteger $ natListVal (Proxy :: Proxy shape)
+
+relu :: TF.OneOf '[Int16, Int32, Int64, Int8, Word16, Word8, Double, Float] a
+     => Tensor shape phs v a -> Tensor shape phs Build a
+relu (Tensor t) = Tensor $ TF.relu t
+
+cast :: (TF.TensorType srcT, TF.TensorType dstT)
+     => Tensor shape phs v srcT -> Tensor shape phs Build dstT
+cast (Tensor t) = Tensor $ TF.cast t

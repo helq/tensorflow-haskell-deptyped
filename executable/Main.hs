@@ -92,7 +92,7 @@ main8 = runSession $ do
   run randomValues
 
 -- testing broadcast rules
-main9 :: IO (Vector 24 Float, Vector 24 Float)
+main9 :: IO (Vector 24 Float, Vector 24 Float, Vector 12 Float)
 main9 = runSession $ do
   let (constant1  :: Tensor   '[4,3] '[] Build Float) = constant . fromJust $ fromList [1,2,3,4,1,2,3,4,1,2,3,4]
       (constant2  :: Tensor '[2,1,3] '[] Build Float) = constant . fromJust $ fromList [1,-1,1,-1,1,-1]
@@ -102,7 +102,11 @@ main9 = runSession $ do
       (constant4  :: Tensor   '[2,1,3] '[] Build Float) = constant . fromJust $ fromList [1,-1,1,-1,1,-1]
       (mulTensor2 :: Tensor '[1,2,4,3] '[] Build Float) = constant3 `mul` constant4
   mulresult2 <- run mulTensor2
-  return (mulresult1, mulresult2)
+  let (constant5  :: Tensor '[2,2,3] '[] Build Float) = constant . fromJust $ fromList [1,2,3,4,1,2,3,4,1,2,3,4]
+      (constant6  :: Tensor     '[1] '[] Build Float) = scalar 3.7
+      (mulTensor3 :: Tensor '[2,2,3] '[] Build Float) = constant5 `mul` constant6
+  mulresult3 <- run mulTensor3
+  return (mulresult1, mulresult2, mulresult3)
 
 main :: IO ()
 main = do

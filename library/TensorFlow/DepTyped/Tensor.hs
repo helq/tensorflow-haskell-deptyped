@@ -55,6 +55,7 @@ type family AddPlaceholder (name :: Symbol) (shape :: [Nat]) (placeholders :: [(
 -- TODO(helq): improve UnionPlaceholder, it should work like merge sort and not like bubble surt
 type family UnionPlaceholder (placeholders1 :: [(Symbol, [Nat])]) (placeholders2 :: [(Symbol, [Nat])]) where
   UnionPlaceholder '[] phs = phs
+  UnionPlaceholder phs '[] = phs
   UnionPlaceholder ('(n1, s1) ': phs1) phs2 = UnionPlaceholder phs1 (AddPlaceholder n1 s1 phs2)
 
 newtype Feed (name :: Symbol) (shape :: [Nat]) a = Feed TF.Feed
@@ -87,7 +88,9 @@ type family SortPlaceholderList' (phs :: [(Symbol, [Nat])]) (phsSorted :: [(Symb
   SortPlaceholderList' '[] phsSorted = phsSorted
   SortPlaceholderList' ('(n,s)':phs) phsSorted = SortPlaceholderList' phs (AddPlaceholder n s phsSorted)
 
-render :: MonadBuild m => Tensor shape plholders Build t -> m (Tensor shape plholders Value t)
+render :: forall (shape::[Nat]) (plholders::[(Symbol,[Nat])]) t m.
+          MonadBuild m
+       => Tensor shape plholders Build t -> m (Tensor shape plholders Value t)
 render (Tensor t) = Tensor <$> TF.render t
 
 -- TODO(helq): replace Placeholder for something more general as it used in the non-deptyped `feed`
