@@ -1,5 +1,5 @@
-Copyright James Bowen (c) 2017
 Copyright Elkin Cruz (c) 2017
+Copyright James Bowen (c) 2017
 
 All rights reserved.
 
