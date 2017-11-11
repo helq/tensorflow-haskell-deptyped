@@ -12,26 +12,26 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverloadedLists #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE OverloadedLists     #-}
+{-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE KindSignatures      #-}
+{-# LANGUAGE RankNTypes          #-}
 
-import Control.Monad (forM_, when)
+import Control.Monad (forM_, forM, when)
 import Control.Monad.IO.Class (liftIO)
 import Data.Int (Int32, Int64)
 import Data.Word (Word8)
 --import Data.List (genericLength)
 import Data.List.Split (chunksOf)
 import qualified Data.Text.IO as T
-import qualified Data.Vector as V
 import Data.Maybe (fromJust)
 
-import qualified Data.Vector.Sized as VS (Vector, concatMap, fromList, fromListN, fromSized)
+import Data.Finite (finite)
+import qualified Data.Vector.Sized as VS (Vector, concatMap, fromList, fromListN, index)
 import Data.Monoid ((<>))
 import Data.Maybe (fromMaybe)
 import GHC.TypeLits (type (*), KnownNat, Nat)
@@ -45,10 +45,12 @@ import TensorFlow.Examples.MNIST.InputData (trainingImageData, testImageData, tr
 import TensorFlow.Examples.MNISTDeptyped.Parse (readMNISTSamples, readMNISTLabels, drawMNIST, MNIST)
 
 import qualified TensorFlow.DepTyped as TFD
+import           TensorFlow.DepTyped (FeedList((:~~)))
 
-numPixels, numLabels :: Int64
+numPixels :: Int64
 numPixels = 28*28 :: Int64
-numLabels = 10 :: Int64
+
+type NumLabels = 10
 
 -- | Create tensor with random values where the stddev depends on the width.
 randomParam' :: forall (shape::[Nat]) m.
@@ -64,37 +66,27 @@ randomParam' width =
 
 data ModelDep = ModelDep {
       train :: TFD.TensorData "images" '[100, 28*28] Float
-               -> TFD.TensorData "labels" '[100] Int32
-               -> TF.Session ()
+            -> TFD.TensorData "labels" '[100] Int32
+            -> TF.Session ()
     , infer :: TFD.TensorData "images" '[100, 28*28] Float
-               -> TF.Session (VS.Vector 100 Int32)
+            -> TF.Session (VS.Vector 100 Int32)
     , errorRate :: TFD.TensorData "images" [100, 28*28] Float
-                   -> TFD.TensorData "labels" '[100] Int32
-                   -> TF.Session Float
+                -> TFD.TensorData "labels" '[100] Int32
+                -> TF.Session Float
     }
 
+--TODO(helq): Make it possible to decide some shape sizes on runtime
 --data ModelDep = ModelDep {
---      traindep :: forall n. KnownNat n
---               => TFD.TensorData "images" '[n, 28*28] Float
---               -> TFD.TensorData "labels" '[n] Int32
---               -> TF.Session ()
---    , inferdep :: forall n. KnownNat n
---               => TFD.TensorData "images" '[n, 28*28] Float
---               -> TF.Session (VS.Vector n Int32)
---    , errorRatedep :: forall n. KnownNat n
---                   => TFD.TensorData "images" [n, 28*28] Float
---                   -> TFD.TensorData "labels" '[n] Int32
---                   -> TF.Session Float
---    }
-
---data Model = Model {
---      train :: TF.TensorData Float  -- ^ images
---            -> TF.TensorData LabelType
+--      train :: forall n. KnownNat n
+--            => TFD.TensorData "images" '[n, 28*28] Float
+--            -> TFD.TensorData "labels" '[n] Int32
 --            -> TF.Session ()
---    , infer :: TF.TensorData Float  -- ^ images
---            -> TF.Session (V.Vector LabelType)  -- ^ predictions
---    , errorRate :: TF.TensorData Float  -- ^ images
---                -> TF.TensorData LabelType
+--    , infer :: forall n. KnownNat n
+--            => TFD.TensorData "images" '[n, 28*28] Float
+--            -> TF.Session (VS.Vector n Int32)
+--    , errorRate :: forall n. KnownNat n
+--                => TFD.TensorData "images" [n, 28*28] Float
+--                -> TFD.TensorData "labels" '[n] Int32
 --                -> TF.Session Float
 --    }
 
@@ -102,7 +94,8 @@ createModel :: TF.Build ModelDep
 createModel = do
   let numUnits = 500
   -- Inputs.
-  images <- TFD.placeholder @"images" @'[100, 28*28] @Float
+  images <- TFD.placeholder @"images" @'[100, 28*28]
+
   -- Hidden layer.
   hiddenWeights <- TFD.initializedVariable =<< randomParam' @'[28*28, 500] numPixels
   hiddenBiases  <- TFD.zeroInitializedVariable @'[500]
@@ -111,17 +104,18 @@ createModel = do
   let mulHiddenZ = TFD.matMul @'[100, 500] images (TFD.readValue hiddenWeights)
       hiddenZ    = mulHiddenZ `TFD.add` (TFD.readValue hiddenBiases)
   let hidden = TFD.relu hiddenZ
+
   ---- Logits.
-  logitWeights <- TFD.initializedVariable =<< randomParam' @'[500, 10] numUnits
-  logitBiases  <- TFD.zeroInitializedVariable @'[10] @Float
-  let logitsZ = TFD.matMul @[100,10] hidden (TFD.readValue logitWeights)
+  logitWeights <- TFD.initializedVariable =<< randomParam' @'[500, NumLabels] numUnits
+  logitBiases  <- TFD.zeroInitializedVariable @'[NumLabels]
+  let logitsZ = TFD.matMul @[100, NumLabels] hidden (TFD.readValue logitWeights)
       logits  = logitsZ `TFD.add` TFD.readValue logitBiases
       prediction = TFD.argMax (Proxy :: Proxy 1) (TFD.softmax logits)
   predict <- TFD.render @_ @_ @Int32 @TF.Build prediction
 
   -- Create training action.
   labels <- TFD.placeholder @"labels" @'[100]
-  let labelVecs = TFD.oneHot_ (Proxy :: Proxy 10) 1 0 labels
+  let labelVecs = TFD.oneHot_ (Proxy :: Proxy NumLabels) 1 0 labels
       loss   = TFD.reduceMean $ fst $ TFD.softmaxCrossEntropyWithLogits logits labelVecs
       params = [TFD.unVariable hiddenWeights, -- this is the most unsecure part of all dependent typed tensorflow haskell example
                 TFD.unVariable hiddenBiases,  -- TODO(helq): investigate how much more complexity is added if minimizeWith receives
@@ -133,25 +127,17 @@ createModel = do
   errorRateTensor <- TFD.render $ TFD.scalar 1 `TFD.sub` TFD.reduceMean @_ @_ @Float (TFD.cast correctPredictions)
 
   return ModelDep {
-        train = undefined -- \imFeed lFeed -> TFD.runWithFeeds
-                   --                   (TFD.feed images imFeed TFD.:~~ TFD.feed labels lFeed TFD.:~~ TFD.NilFeedList)
-                   --                   trainStep
-                             -- TODO(helq): this doesn't work because FeedList has a unique type for all feeds, and this is bullshit
-                             --   todo now! change [(Symbol,[Nat])] for [(Symbol,[Nat],Type)]
-      , infer = undefined -- \imFeed -> TFD.runWithFeeds (TFD.feed images imFeed TFD.:~~ TFD.NilFeedList) predict
-      , errorRate = undefined
+        train = \imFeed lFeed -> TFD.runWithFeeds
+                                 (TFD.feed images imFeed :~~ TFD.feed labels lFeed :~~ TFD.NilFeedList)
+                                 trainStep
+      , infer = \imFeed -> TFD.runWithFeeds (TFD.feed images imFeed :~~ TFD.NilFeedList) predict
+      , errorRate = \imFeed lFeed -> TF.unScalar <$>
+                                        TFD.runWithFeeds (
+                                          TFD.feed images imFeed :~~
+                                          TFD.feed labels lFeed  :~~
+                                          TFD.NilFeedList
+                                        ) errorRateTensor
       }
-  --return ModelDep {
-  --      traindep = \imFeed lFeed -> TF.runWithFeeds_ [
-  --            TF.feed images imFeed
-  --          , TF.feed labels lFeed
-  --          ] trainStep
-  --    , inferdep = \imFeed -> TF.runWithFeeds [TF.feed images imFeed] predict
-  --    , errorRatedep = \imFeed lFeed -> TF.unScalar <$> TF.runWithFeeds [
-  --            TF.feed images imFeed
-  --          , TF.feed labels lFeed
-  --          ] errorRateTensor
-  --    }
 
 main :: IO ()
 --main = do
@@ -197,9 +183,12 @@ main = TF.runSession $ do
       liftIO $ putStrLn ""
 
       ---- Test.
-      --testErr <- errorRate model (encodeImageBatch testImages)
-      --                           (encodeLabelBatch testLabels)
-      --liftIO $ putStrLn $ "test error " ++ show (testErr * 100)
+      let imageTestBatches = fmap chunkToVector . chunksOf (fromIntegral batchSize) $ testImages :: [VS.Vector 100 MNIST]
+          labelTestBatches = fmap chunkToVector . chunksOf (fromIntegral batchSize) $ testLabels :: [VS.Vector 100 Word8]
+      testErrAcc <- forM (zip imageTestBatches labelTestBatches) $ \(ti, tl) ->
+        errorRate model (encodeImageBatch ti) (encodeLabelBatch tl)
+      let testErr = sum testErrAcc / 100 -- a total of 100 chunks because there are 10000 total images on testImages
+      liftIO $ putStrLn $ "test error " ++ show (testErr * 100)
 
       -- Show some predictions.
       -- testPreds has size 100 because of the constraints on size :S
@@ -208,6 +197,7 @@ main = TF.runSession $ do
           putStrLn ""
           T.putStrLn $ drawMNIST $ testImages !! i
           putStrLn $ "expected " ++ show (testLabels !! i)
-          putStrLn $ "     got " ++ show (VS.fromSized testPreds V.! i)
+          let fi = finite $ fromIntegral i -- this is actually insecure, it can throw an error at runtime
+          putStrLn $ "     got " ++ show (testPreds `VS.index` fi)
 
       return ()

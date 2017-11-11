@@ -1,5 +1,5 @@
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DataKinds           #-}
 {-# OPTIONS_GHC -Wno-missing-import-lists #-}
 
 module Main (main) where

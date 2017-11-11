@@ -1,5 +1,6 @@
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds      #-}
+{-# LANGUAGE TypeInType     #-}
 
 module TensorFlow.DepTyped.Output (
   ControlNode(ControlNode, unControlNode)
@@ -7,5 +8,6 @@ module TensorFlow.DepTyped.Output (
 
 import qualified TensorFlow.Output as TF (ControlNode)
 import GHC.TypeLits (Nat, Symbol)
+import Data.Kind (Type)
 
-newtype ControlNode (phs :: [(Symbol, [Nat])]) = ControlNode { unControlNode :: TF.ControlNode }
+newtype ControlNode (phs :: [(Symbol, [Nat], Type)]) = ControlNode { unControlNode :: TF.ControlNode }

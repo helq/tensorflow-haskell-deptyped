@@ -1,11 +1,12 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DataKinds              #-}
+{-# LANGUAGE FlexibleContexts       #-}
+{-# LANGUAGE TypeFamilies           #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
+{-# LANGUAGE ScopedTypeVariables    #-}
+{-# LANGUAGE TypeSynonymInstances   #-}
+{-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE TypeInType             #-}
 
 module TensorFlow.DepTyped.Session (
   Runnable(runWithFeeds, run)
@@ -22,16 +23,17 @@ import           Control.Monad.IO.Class (MonadIO)
 import qualified Foreign.Storable as FS (Storable)
 
 import           GHC.TypeLits (KnownNat, Nat, Symbol)
+import           Data.Kind (Type)
 
-import           TensorFlow.DepTyped.Tensor (Tensor(Tensor), FeedList(NilFeedList,(:~~)), Feed(Feed), SortPlaceholderList)
+import           TensorFlow.DepTyped.Tensor (Tensor(Tensor), FeedList(NilFeedList,(:~~)), Feed(Feed))
 import           TensorFlow.DepTyped.Output (ControlNode(ControlNode))
-import           TensorFlow.DepTyped.Base (ShapeProduct)
+import           TensorFlow.DepTyped.Base (ShapeProduct, SortPlaceholderList)
 
 -- TODO(helq): find a way to created "dependent typed" version of run_ and runWithFeeds_
 
 -- TODO(helq): add instances for (,), (,,), so on
-class Runnable (feedlist_phs :: [(Symbol, [Nat])]) tt rs a | tt -> a, rs -> a where
-  runWithFeeds :: MonadIO m => FeedList feedlist_phs a -> tt -> TF.SessionT m rs
+class Runnable (feedlist_phs :: [(Symbol, [Nat], Type)]) tt rs a | tt -> a, rs -> a where
+  runWithFeeds :: MonadIO m => FeedList feedlist_phs -> tt -> TF.SessionT m rs
   run :: (MonadIO m, feedlist_phs ~ '[]) => tt -> TF.SessionT m rs
 
 instance (FS.Storable a,
@@ -65,6 +67,6 @@ instance (FS.Storable a,
   runWithFeeds feeds (Tensor t) = TF.runWithFeeds (getListFeeds feeds) t
   run (Tensor t) = TF.run t
 
-getListFeeds :: FeedList phs a -> [TF.Feed]
+getListFeeds :: FeedList phs -> [TF.Feed]
 getListFeeds NilFeedList     = []
 getListFeeds (Feed f :~~ fs) = f : getListFeeds fs

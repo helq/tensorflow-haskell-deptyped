@@ -57,6 +57,7 @@ executable mnist-deptyped
                , split
                , tensorflow-deptyped
                , vector-sized
+               , finite-typelits
 
 --Test-Suite ParseTest
 --  default-language: Haskell2010

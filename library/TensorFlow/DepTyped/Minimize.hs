@@ -1,7 +1,7 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE DataKinds      #-}
+{-# LANGUAGE RankNTypes     #-}
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE TypeInType #-}
+{-# LANGUAGE TypeInType     #-}
 
 module TensorFlow.DepTyped.Minimize (
   minimizeWith
@@ -18,7 +18,7 @@ import           TensorFlow.Build (MonadBuild)
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor))
 import           TensorFlow.DepTyped.Output (ControlNode(ControlNode))
 
-minimizeWith :: forall (m :: Type -> Type) a (v :: Type -> Type) (phs::[(Symbol,[Nat])]) (shape::[Nat]).
+minimizeWith :: forall (m :: Type -> Type) a (v :: Type -> Type) (phs::[(Symbol,[Nat],Type)]) (shape::[Nat]).
                 (MonadBuild m, TF.GradientCompatible a)
              => TF.Minimizer a
              -> Tensor shape phs v a
