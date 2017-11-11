@@ -6,13 +6,14 @@ category:       Machine Learning
 homepage:       https://github.com/helq/tensorflow-haskell-deptyped#readme
 bug-reports:    https://github.com/helq/tensorflow-haskell-deptyped/issues
 maintainer:     Elkin Cruz
-license:        BSD3
+license:        BSD3 -- Is sad that I cannot put a dual license in here :/
 build-type:     Simple
 cabal-version:  >= 1.10
 
 extra-source-files:
     CHANGELOG.md
-    LICENSE
+    LICENSE.BSD.txt
+    LICENSE.Apache.txt
     README.md
     stack.yaml
 
