@@ -20,6 +20,7 @@
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module TensorFlow.DepTyped.Ops (
   constant,
@@ -38,7 +39,8 @@ module TensorFlow.DepTyped.Ops (
   truncatedNormal,
   relu,
   sub,
-  cast
+  cast,
+  square
 ) where
 
 import           GHC.TypeLits (Nat, Symbol, KnownNat, natVal)
@@ -53,7 +55,9 @@ import           Data.ByteString (ByteString)
 
 import qualified TensorFlow.Ops as TF (constant, add, matMul, placeholder, argMax, scalar,
                                        softmax, oneHot, reduceMean, softmaxCrossEntropyWithLogits,
-                                       equal, truncatedNormal, vector, mul, relu, sub, cast)
+                                       equal, truncatedNormal, vector, mul, relu, sub, cast, abs, sign,
+                                       neg)
+import qualified TensorFlow.GenOps.Core as TF (square)
 import qualified TensorFlow.Types as TF (TensorType, Shape(Shape), type OneOf)
 --import qualified TensorFlow.Tensor as TF (Tensor)
 import           TensorFlow.Tensor (Value)
@@ -62,6 +66,21 @@ import           TensorFlow.Build (Build, MonadBuild)
 import           TensorFlow.DepTyped.Base (KnownNatList(natListVal), ShapeProduct, UnionPlaceholder,
                                            BroadcastShapes, RemoveAxisFromShape, AddAxisToEndShape)
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor), Placeholder)
+
+
+instance ( TF.TensorType a
+         , Num a
+         , shps ~ '[]
+         , v ~ Build
+         , TF.OneOf '[ Double, Float, Int32, Int64
+                     , Complex Float, Complex Double] a) => Num (Tensor s shps v a) where
+    (Tensor t1) + (Tensor t2) = Tensor (t1 `TF.add` t2)
+    (Tensor t1) * (Tensor t2) = Tensor (t1 `TF.mul` t2)
+    (Tensor t1) - (Tensor t2) = Tensor (t1 `TF.sub` t2)
+    abs (Tensor t)    = Tensor (TF.abs t)
+    fromInteger       = Tensor . TF.scalar . fromInteger
+    signum (Tensor t) = Tensor (TF.sign t)
+    negate (Tensor t) = Tensor (TF.neg t)
 
 constant :: forall (s :: [Nat]) (n :: Nat) a.
             (TF.TensorType a, ShapeProduct s ~ n, KnownNatList s)
@@ -171,3 +190,7 @@ relu (Tensor t) = Tensor $ TF.relu t
 cast :: (TF.TensorType srcT, TF.TensorType dstT)
      => Tensor shape phs v srcT -> Tensor shape phs Build dstT
 cast (Tensor t) = Tensor $ TF.cast t
+
+square :: TF.OneOf '[(Complex Double), (Complex Float), Int32, Int64, Word16, Double, Float] a
+    => Tensor shape phs v a -> Tensor shape phs Build a
+square (Tensor t) = Tensor (TF.square t)
