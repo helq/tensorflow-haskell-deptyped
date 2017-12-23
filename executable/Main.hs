@@ -123,15 +123,30 @@ main9 = runSession $ do
   mulresult3 <- run mulTensor3
   return (mulresult1, mulresult2, mulresult3)
 
+main10 :: IO (Vector 8 Float)
+main10 = runSession $ do
+  (x :: Placeholder "x" '[4,3] Float) <- placeholder
+
+  let elems1 = fromJust $ fromList [1,2,3,4,1,2]
+      elems2 = fromJust $ fromList [5,6,7,8]
+      (w :: Tensor '[3,2] '[] Build Float) = constant elems1
+      (b :: Tensor '[4,1] '[] Build Float) = constant elems2
+      y = (x `matMul` w) `add` b -- y shape: [4,2] (b shape is [4.1] but it broadcasts)
+
+  let (inputX :: TensorData "x" [4,3] Float) = encodeTensorData . fromJust $ fromList [1,2,3,4,1,0,7,9,5,3,5,4]
+
+  runWithFeeds (feed x inputX :~~ NilFeedList) y
+
 main :: IO ()
 main = do
-  main1 >>= print
-  main2 >>= print
-  main3 >>= print
-  main4 >>= print
-  main5 >>= print
-  main6 >>= print
-  main7 >>= print
-  main8 >>= print
-  main9 >>= print
+  main1  >>= print
+  main2  >>= print
+  main3  >>= print
+  main4  >>= print
+  main5  >>= print
+  main6  >>= print
+  main7  >>= print
+  main8  >>= print
+  main9  >>= print
+  main10 >>= print
   fails >>= print
