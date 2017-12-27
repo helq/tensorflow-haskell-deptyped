@@ -32,6 +32,7 @@ import           TensorFlow.Build (MonadBuild)
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor))
 import           TensorFlow.DepTyped.Output (ControlNode(ControlNode))
 
+-- TODO(helq): change [Nat] for [Dim]
 minimizeWith :: forall (m :: Type -> Type) a (v :: Type -> Type) (phs::[(Symbol,[Nat],Type)]) (shape::[Nat]).
                 (MonadBuild m, TF.GradientCompatible a)
              => TF.Minimizer a

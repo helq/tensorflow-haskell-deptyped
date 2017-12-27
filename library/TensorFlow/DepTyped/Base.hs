@@ -38,6 +38,8 @@ import           Data.Proxy (Proxy(Proxy))
 import           Data.Promotion.Prelude (type If, type (:<), type (:>), type (:||), type (:==), type Reverse, type Length)
 import           Data.Kind (Constraint, Type)
 
+--data Dim = D Nat | NoDim Symbol
+
 class KnownNatList (ns :: [Nat]) where
    natListVal :: proxy ns -> [Integer]
 -- Base case
@@ -98,6 +100,7 @@ type family SortPlaceholderList' (phs :: [(Symbol, [Nat], Type)])
   SortPlaceholderList' '[] phsSorted = phsSorted
   SortPlaceholderList' ('(n,s,t)':phs) phsSorted = SortPlaceholderList' phs (AddPlaceholder n s t phsSorted)
 
+-- TODO(helq): change [Nat] for [Dim]
 type family BroadcastShapes (shape1::[Nat]) (shape2::[Nat]) :: [Nat] where
   BroadcastShapes shape shape = shape
   BroadcastShapes '[1] shape2 = shape2 -- this base cases are necessary to allow things like randomParam in mnist-deptyped example

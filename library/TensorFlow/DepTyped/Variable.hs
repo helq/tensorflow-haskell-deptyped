@@ -36,17 +36,21 @@ import           TensorFlow.DepTyped.Tensor (Tensor(Tensor))
 import           TensorFlow.DepTyped.Base (KnownNatList(natListVal))
 import           Data.Proxy (Proxy(Proxy))
 
+-- TODO(helq): change [Nat] for [Dim]
 newtype Variable (shape :: [Nat]) a = Variable { unVariable :: TF.Variable a }
 
+-- TODO(helq): change [Nat] for [Dim]
 initializedVariable :: forall (shape::[Nat]) a v m.
                        (TF.TensorType a, TF.MonadBuild m)
                     => Tensor shape '[] v a -> m (Variable shape a)
 initializedVariable (Tensor t) = Variable <$> TF.initializedVariable t
 
+-- TODO(helq): change [Nat] for [Dim]
 zeroInitializedVariable :: forall (shape :: [Nat]) a m.
                            (TF.MonadBuild m, TF.TensorType a, Num a, KnownNatList shape) => m (Variable shape a)
 zeroInitializedVariable = Variable <$> TF.zeroInitializedVariable shape
   where shape = TF.Shape . fmap fromInteger $ natListVal (Proxy :: Proxy shape)
 
+-- TODO(helq): change [Nat] for [Dim]
 readValue :: TF.TensorType a => Variable shape a -> Tensor shape '[] Build a
 readValue (Variable v) = Tensor $ TF.readValue v

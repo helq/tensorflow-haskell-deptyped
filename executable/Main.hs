@@ -87,7 +87,7 @@ main5 :: IO (Vector 20 Int32)
 main5 = runSession $ do
   let elems = fromJust $ fromList [1,2,3,4]
       (constant1 :: Tensor '[2,2] '[] Build Int32) = constant elems
-  run $ oneHot_ (Proxy :: Proxy 5) 1 0 constant1
+  run $ oneHot (Proxy :: Proxy 5) 1 0 constant1
 
 main6 :: IO (Vector 1 Double)
 main6 = runSession $ do
@@ -131,7 +131,7 @@ main10 = runSession $ do
       elems2 = fromJust $ fromList [5,6,7,8]
       (w :: Tensor '[3,2] '[] Build Float) = constant elems1
       (b :: Tensor '[4,1] '[] Build Float) = constant elems2
-      y = (x `matMul` w) `add` b -- y shape: [4,2] (b shape is [4.1] but it broadcasts)
+      y = (x `matMul` w) `add` b -- y shape: [4,2] (b shape is [4.1] but `add` broadcasts it to [4,2])
 
   let (inputX :: TensorData "x" [4,3] Float) = encodeTensorData . fromJust $ fromList [1,2,3,4,1,0,7,9,5,3,5,4]
 

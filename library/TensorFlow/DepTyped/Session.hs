@@ -46,6 +46,7 @@ import           TensorFlow.DepTyped.Base (ShapeProduct, SortPlaceholderList)
 
 -- TODO(helq): find a way to created "dependent typed" version of run_ and runWithFeeds_
 
+-- TODO(helq): change [Nat] for [Dim]
 -- TODO(helq): add instances for (,), (,,), so on
 class Runnable (feedlist_phs :: [(Symbol, [Nat], Type)]) tt rs a | tt -> a, rs -> a where
   runWithFeeds :: MonadIO m => FeedList feedlist_phs -> tt -> TF.SessionT m rs

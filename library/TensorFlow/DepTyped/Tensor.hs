@@ -45,6 +45,19 @@ import qualified TensorFlow.Types as TF (TensorType)
 import           TensorFlow.DepTyped.Base (PlaceholderNotInList)
 import           TensorFlow.DepTyped.Types (TensorData(TensorData))
 
+--TODO(helq): replace current Tensor definition for following
+--data ConstraintDim = DimEq Symbol Symbol
+--                   | DimAssign Symbol Nat
+--data TensorEnvironment =
+--  TensorEnv {
+--              placeholders :: [(Symbol, [Dim], Type)],
+--              variables    :: [(Symbol, [Dim], Type)],
+--              dimRestrictions :: [ConstraintDim]
+--            }
+--
+--data Tensor (s :: [Dim]) (te :: TensorEnvironment) v a where
+--  Tensor :: (TF.TensorType a) => TF.Tensor v a -> Tensor s te v a
+
 data Tensor (s :: [Nat]) (p :: [(Symbol, [Nat], Type)]) v a where
   Tensor :: (TF.TensorType a) => TF.Tensor v a -> Tensor s p v a
 
@@ -61,11 +74,14 @@ data FeedList (placeholders :: [(Symbol, [Nat], Type)]) where
 
 infixr 5 :~~
 
-render :: forall (shape::[Nat]) (plholders::[(Symbol,[Nat],Type)]) t m.
+-- TODO(helq): change [Nat] for [Dim]
+render :: forall (shape::[Nat]) (plholders::[(Symbol,[Nat],Type)]) a m.
           MonadBuild m
-       => Tensor shape plholders Build t -> m (Tensor shape plholders Value t)
+       => Tensor shape plholders Build a -> m (Tensor shape plholders Value a)
 render (Tensor t) = Tensor <$> TF.render t
 
 -- TODO(helq): replace Placeholder for something more general as it used in the non-deptyped `feed`
+--             the shape from placeholder could be [Dim] while TensorData must be [Nat], the result
+--             is a shape of [Nat] for Feed
 feed :: Placeholder name shape a -> TensorData name shape a -> Feed name shape a
 feed (Tensor t) (TensorData td) = Feed $ TF.feed t td

@@ -24,4 +24,5 @@ import qualified TensorFlow.Output as TF (ControlNode)
 import GHC.TypeLits (Nat, Symbol)
 import Data.Kind (Type)
 
+-- TODO(helq): change [Nat] for [Dim]
 newtype ControlNode (phs :: [(Symbol, [Nat], Type)]) = ControlNode { unControlNode :: TF.ControlNode }

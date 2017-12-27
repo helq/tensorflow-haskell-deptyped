@@ -116,7 +116,7 @@ createModel = do
 
   -- Create training action.
   labels <- TFD.placeholder @"labels" @'[100]
-  let labelVecs = TFD.oneHot_ (Proxy :: Proxy NumLabels) 1 0 labels
+  let labelVecs = TFD.oneHot (Proxy :: Proxy NumLabels) 1 0 labels
       loss   = TFD.reduceMean $ fst $ TFD.softmaxCrossEntropyWithLogits logits labelVecs
       params = [TFD.unVariable hiddenWeights, -- this is the most unsecure part of all dependent typed tensorflow haskell example
                 TFD.unVariable hiddenBiases,  -- TODO(helq): investigate how much more complexity is added if minimizeWith receives
