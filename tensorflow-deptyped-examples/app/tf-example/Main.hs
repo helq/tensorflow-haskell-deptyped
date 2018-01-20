@@ -33,7 +33,7 @@ import           GHC.TypeLits (KnownNat)
 
 main :: IO ()
 main = do
-    -- Generate data where `y = x*3 + 8`.
+    -- Generate data where `y = x*3 + 8`. (100 datapoints)
     xData <- VS.replicateM @100 randomIO
     let yData = VS.map (\x->x*3 + 8) xData
     -- Fit linear regression model.

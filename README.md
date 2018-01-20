@@ -90,5 +90,7 @@ fit xData yData = TF.runSession $ do
 
 ## LICENSE ##
 
-This project is dual licensed under [Apache 2.0](LICENSE.Apache.txt) and
-[BSD3](LICENSE.BSD.txt).
+Except for the folders `tensorflow-*`, this project is dual licensed under
+[Apache 2.0](LICENSE.Apache.txt) and [BSD3](LICENSE.BSD.txt).
+
+Each subfolder `tensorflow-*` has is own LICENSE, please read each one with care.

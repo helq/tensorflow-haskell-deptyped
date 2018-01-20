@@ -1,0 +1,48 @@
+name:           tensorflow-deptyped-examples
+version:        0.0.0.1
+description:    Examples of usage of tensorflow-deptyped
+homepage:       https://github.com/helq/tensorflow-deptyped#readme
+bug-reports:    https://github.com/helq/tensorflow-deptyped/issues
+author:         Elkin Cruz
+license:        Apache
+build-type:     Simple
+cabal-version:  >= 1.10
+
+extra-source-files:
+    README.md
+    app/checking-shapes/LICENSE.Apache.txt
+    app/checking-shapes/LICENSE.BSD.txt
+    app/tf-example/LICENSE
+
+executable checking-shapes
+  main-is: Main.hs
+  hs-source-dirs:
+      app/checking-shapes
+  ghc-options: -Wall -rtsopts -threaded -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , tensorflow-deptyped <1.0
+    , bytestring
+    , vector
+    , vector-sized
+    , singletons
+    , tensorflow
+    , tensorflow-ops
+  -- other-modules:
+  --     Paths_tensorflow_deptyped_examples
+  default-language: Haskell2010
+
+executable tf-example
+  main-is: Main.hs
+  hs-source-dirs:
+      app/tf-example
+  ghc-options: -Wall -rtsopts -threaded -with-rtsopts=-N
+  build-depends:
+      base >= 4.9 && < 5
+    , tensorflow-deptyped <1.0
+    , random
+    , HUnit
+    , tensorflow
+    , tensorflow-core-ops
+    , tensorflow-ops
+    , vector-sized

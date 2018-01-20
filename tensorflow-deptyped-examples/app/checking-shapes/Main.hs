@@ -17,8 +17,6 @@
 {-# LANGUAGE DataKinds           #-}
 {-# OPTIONS_GHC -Wno-missing-import-lists #-}
 
-module Main (main) where
-
 import           Data.Maybe (fromJust)
 import           Data.Int (Int64, Int32)
 --import qualified Data.Vector as VN (Vector)
