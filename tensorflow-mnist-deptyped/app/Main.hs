@@ -38,6 +38,7 @@ import Data.Maybe (fromMaybe)
 import GHC.TypeLits (type (*), KnownNat, Nat)
 --import GHC.TypeLits (someNatVal, SomeNat(SomeNat))
 import Data.Proxy (Proxy(Proxy))
+import Data.Singletons (Sing, sing)
 
 import qualified TensorFlow.Core as TF
 import qualified TensorFlow.Minimize as TF (adam)
@@ -111,12 +112,12 @@ createModel = do
   logitBiases  <- TFD.zeroInitializedVariable @'[NumLabels]
   let logitsZ = TFD.matMul @[100, NumLabels] hidden (TFD.readValue logitWeights)
       logits  = logitsZ `TFD.add` TFD.readValue logitBiases
-      prediction = TFD.argMax (Proxy :: Proxy 1) (TFD.softmax logits)
+      prediction = TFD.argMax (sing :: Sing 1) (TFD.softmax logits)
   predict <- TFD.render @_ @_ @Int32 @TF.Build prediction
 
   -- Create training action.
   labels <- TFD.placeholder @"labels" @'[100]
-  let labelVecs = TFD.oneHot (Proxy :: Proxy NumLabels) 1 0 labels
+  let labelVecs = TFD.oneHot (sing :: Sing NumLabels) 1 0 labels
       loss   = TFD.reduceMean $ fst $ TFD.softmaxCrossEntropyWithLogits logits labelVecs
       params = [TFD.unVariable hiddenWeights, -- this is the most unsecure part of all dependent typed tensorflow haskell example
                 TFD.unVariable hiddenBiases,  -- TODO(helq): investigate how much more complexity is added if minimizeWith receives

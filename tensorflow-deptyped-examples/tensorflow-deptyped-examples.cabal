@@ -52,3 +52,4 @@ executable tf-example
     , tensorflow-core-ops
     , tensorflow-ops
     , vector-sized
+    , singletons

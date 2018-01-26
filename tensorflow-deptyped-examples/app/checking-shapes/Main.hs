@@ -1,4 +1,4 @@
--- Copyright 2017 Elkin Cruz.
+-- Copyright 2017-2018 Elkin Cruz.
 -- Copyright 2017 James Bowen.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,7 @@ import           Data.Maybe (fromJust)
 import           Data.Int (Int64, Int32)
 --import qualified Data.Vector as VN (Vector)
 import           Data.Vector.Sized (Vector, fromList)
-
-import           Data.Proxy (Proxy(Proxy))
+import           Data.Singletons (Sing, sing)
 
 import           TensorFlow.DepTyped
 
@@ -85,7 +84,7 @@ main5 :: IO (Vector 20 Int32)
 main5 = runSession $ do
   let elems = fromJust $ fromList [1,2,3,4]
       (constant1 :: Tensor '[2,2] '[] Build Int32) = constant elems
-  run $ oneHot (Proxy :: Proxy 5) 1 0 constant1
+  run $ oneHot (sing :: Sing 5) 1 0 constant1
 
 main6 :: IO (Vector 1 Double)
 main6 = runSession $ do

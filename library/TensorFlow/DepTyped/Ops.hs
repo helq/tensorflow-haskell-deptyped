@@ -42,8 +42,7 @@ module TensorFlow.DepTyped.Ops (
   square
 ) where
 
-import           GHC.TypeLits (Nat, Symbol, KnownNat, natVal)
-import           Data.Proxy (Proxy)
+import           GHC.TypeLits (Nat, Symbol)
 import           Data.Kind (Type)
 
 import           Data.Vector.Sized (Vector, toList)
@@ -65,7 +64,7 @@ import           TensorFlow.Build (Build, MonadBuild)
 import           TensorFlow.DepTyped.Base (KnownNats, NatList, ShapeProduct, UnionPlaceholder,
                                            BroadcastShapes, RemoveAxisFromShape, AddAxisToEndShape)
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor), Placeholder)
-import           Data.Singletons (fromSing, sing)
+import           Data.Singletons (fromSing, sing, Sing, SingI)
 
 -- This instance allows us to write "simpler" code when we want to create a constant vector with ease
 -- e.g.,
@@ -124,17 +123,16 @@ matMul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.matMul` t2)
 
 -- TODO(helq): change [Nat] for [Dim]
 argMax :: forall (n::Nat) (output_shape::[Nat]) (shape::[Nat]) (phs::[(Symbol,[Nat],Type)]) t output_type v.
-          (KnownNat n,
-           output_shape ~ RemoveAxisFromShape n shape,
+          (output_shape ~ RemoveAxisFromShape n shape,
            TF.OneOf '[(Complex Double), (Complex Float), Int16, Int32, Int64, Int8, Word16, Word8, Double, Float] t,
            TF.OneOf '[Int32, Int64] output_type)
-       => Proxy n
+       => Sing n
        -> Tensor shape phs v t
        -> Tensor output_shape phs Build output_type
-argMax p (Tensor t) = Tensor $ TF.argMax t (TF.scalar (fromInteger $ natVal p :: Int64))
+argMax s (Tensor t) = Tensor $ TF.argMax t (TF.scalar (fromInteger $ fromSing s :: Int64))
 
 -- TODO(helq): change [Nat] for [Dim]
-softmax :: (TF.OneOf '[Word16, Double, Float] t, KnownNat batchSize, KnownNat outs)
+softmax :: (TF.OneOf '[Word16, Double, Float] t, SingI (batchSize :: Nat), SingI (outs :: Nat))
         => Tensor '[batchSize, outs] phs v t
         -> Tensor '[batchSize, outs] phs Build t
 softmax (Tensor t) = Tensor $ TF.softmax t
@@ -145,15 +143,15 @@ scalar = Tensor . TF.scalar
 
 -- TODO(helq): change [Nat] for [Dim]
 oneHot :: (TF.TensorType t,
-           KnownNat n,
+           SingI (n :: Nat),
            TF.OneOf '[Int32, Int64, Word8] tI,
            output_shape ~ AddAxisToEndShape shape n)
-       => Proxy n
+       => Sing n
        -> Tensor '[1] '[] v'2 t
        -> Tensor '[1] '[] v'3 t
        -> Tensor shape phs v'1 tI
        -> Tensor output_shape phs Build t
-oneHot p (Tensor t1) (Tensor t2) (Tensor tinput) = Tensor $ TF.oneHot tinput (TF.scalar (fromInteger $ natVal p :: Int32)) t1 t2
+oneHot s (Tensor t1) (Tensor t2) (Tensor tinput) = Tensor $ TF.oneHot tinput (TF.scalar (fromInteger $ fromSing s :: Int32)) t1 t2
 
 -- TODO(helq): change [Nat] for [Dim]
 reduceMean :: forall (shape::[Nat]) (phs::[(Symbol,[Nat],Type)]) a v.

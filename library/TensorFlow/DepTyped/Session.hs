@@ -67,7 +67,7 @@ instance SortPlaceholderList feedlist_phs ~ phs => Runnable feedlist_phs (Contro
 -- TODO(helq): remove error that appears in fromMaybe
 instance (FS.Storable a,
           TF.TensorDataType VN.Vector a,
-          KnownNat n,
+          KnownNat n, -- This KnownNat didn't get replaced by SingI because toSized requires KnownNat
           ShapeProduct shape ~ n,
           SortPlaceholderList feedlist_phs ~ phs)
        => Runnable feedlist_phs (Tensor shape phs v a) (Vector n a) a where
