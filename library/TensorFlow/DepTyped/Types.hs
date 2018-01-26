@@ -1,4 +1,4 @@
--- Copyright 2017 Elkin Cruz.
+-- Copyright 2017-2018 Elkin Cruz.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -30,17 +30,17 @@ import           Data.Vector.Sized (Vector, fromSized)
 
 import           GHC.TypeLits (Nat, Symbol)
 import           Data.Kind (Type)
-import           Data.Proxy (Proxy(Proxy))
 
 import qualified TensorFlow.Types as TF (TensorDataType, TensorData, TensorType, encodeTensorData, Shape(Shape))
 
-import           TensorFlow.DepTyped.Base (KnownNatList(natListVal), ShapeProduct)
+import           TensorFlow.DepTyped.Base (KnownNats, NatList, ShapeProduct)
+import           Data.Singletons (fromSing, sing)
 
 newtype TensorData (n :: Symbol) (s :: [Nat]) (a :: Type) = TensorData {unTensorData :: TF.TensorData a}
 
 encodeTensorData :: forall a (name :: Symbol) (shape :: [Nat]) (n :: Nat).
-                 (TF.TensorType a, ShapeProduct shape ~ n, KnownNatList shape, TF.TensorDataType VN.Vector a)
+                 (TF.TensorType a, ShapeProduct shape ~ n, KnownNats shape, TF.TensorDataType VN.Vector a)
                  => Vector n a
                  -> TensorData name shape a
 encodeTensorData v = TensorData (TF.encodeTensorData shape $ fromSized v :: TF.TensorData a)
-  where shape = TF.Shape . fmap fromInteger $ natListVal (Proxy :: Proxy shape)
+  where shape = TF.Shape . fmap fromInteger $ fromSing (sing :: NatList shape) -- NatList s == Sing (s::[Nat]) or in this case Sing s

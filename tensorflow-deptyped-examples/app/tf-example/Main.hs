@@ -16,7 +16,6 @@
 {-# LANGUAGE DataKinds            #-}
 {-# LANGUAGE TypeApplications     #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
-{-# OPTIONS_GHC -Wno-missing-import-lists #-}
 
 import Control.Monad (replicateM_)
 import System.Random (randomIO)

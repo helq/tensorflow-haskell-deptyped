@@ -1,4 +1,4 @@
--- Copyright 2017 Elkin Cruz.
+-- Copyright 2017-2018 Elkin Cruz.
 -- Copyright 2017 James Bowen.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,12 @@
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TypeInType           #-}
+{-# LANGUAGE ConstraintKinds      #-}
 
 module TensorFlow.DepTyped.Base (
-  KnownNatList(natListVal),
+  KnownNats,
+  NatList,
+  SomeNats,
   ShapeProduct,
   AddPlaceholder,
   UnionPlaceholder,
@@ -33,21 +36,17 @@ module TensorFlow.DepTyped.Base (
   AddAxisToEndShape
 ) where
 
-import           GHC.TypeLits (Nat, KnownNat, natVal, type (*), Symbol, TypeError, ErrorMessage(Text, ShowType, (:<>:)), type (-))
-import           Data.Proxy (Proxy(Proxy))
+import           GHC.TypeLits (Nat, type (*), Symbol, TypeError, ErrorMessage(Text, ShowType, (:<>:)), type (-))
 import           Data.Promotion.Prelude (type If, type (:<), type (:>), type (:||), type (:==), type Reverse, type Length)
 import           Data.Kind (Constraint, Type)
+import           Data.Singletons (SingI, SomeSing, Sing)
 
 --data Dim = D Nat | NoDim Symbol
 
-class KnownNatList (ns :: [Nat]) where
-   natListVal :: proxy ns -> [Integer]
--- Base case
-instance KnownNatList '[] where
-  natListVal _ = []
--- Inductive step
-instance (KnownNat n, KnownNatList ns) => KnownNatList (n ': ns) where
-  natListVal _ = natVal (Proxy :: Proxy n) : natListVal (Proxy :: Proxy ns)
+-- Reconsider removing this three definitions to use raw singletons instead
+type KnownNats (xs :: [Nat]) = SingI xs
+type NatList (xs :: [Nat]) = Sing xs -- gives us the same as KnownNats
+type SomeNats = SomeSing [Nat]
 
 type family ShapeProduct (s :: [Nat]) :: Nat where
   ShapeProduct '[] = 1

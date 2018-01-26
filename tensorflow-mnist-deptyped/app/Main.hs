@@ -1,4 +1,4 @@
--- Copyright 2017 Elkin Cruz.
+-- Copyright 2017-2018 Elkin Cruz.
 -- Copyright 2016 TensorFlow authors.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +55,7 @@ type NumLabels = 10
 
 -- | Create tensor with random values where the stddev depends on the width.
 randomParam' :: forall (shape::[Nat]) m.
-                (TFD.KnownNatList shape, TFD.MonadBuild m)
+                (TFD.KnownNats shape, TFD.MonadBuild m)
              => Int64 -> m (TFD.Tensor shape '[] TFD.Build Float)
 randomParam' width =
     (`TFD.mul` stddev) <$> TFD.truncatedNormal @shape

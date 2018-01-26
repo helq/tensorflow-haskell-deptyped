@@ -41,6 +41,7 @@ executable mnist-deptyped
   default-language: Haskell2010
   main-is: Main.hs
   hs-source-dirs: app
+  ghc-options: -Wall -rtsopts -threaded -with-rtsopts=-N -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-import-lists
   build-depends: base
                , bytestring
                , filepath

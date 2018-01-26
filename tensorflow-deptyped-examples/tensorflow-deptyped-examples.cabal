@@ -18,7 +18,10 @@ executable checking-shapes
   main-is: Main.hs
   hs-source-dirs:
       app/checking-shapes
-  ghc-options: -Wall -rtsopts -threaded -with-rtsopts=-N
+  ghc-options:
+    -Wall -rtsopts -threaded -with-rtsopts=-N
+    -Wincomplete-uni-patterns -Wincomplete-record-updates
+    -- -Wmissing-import-lists
   build-depends:
       base >=4.7 && <5
     , tensorflow-deptyped <1.0
@@ -36,7 +39,10 @@ executable tf-example
   main-is: Main.hs
   hs-source-dirs:
       app/tf-example
-  ghc-options: -Wall -rtsopts -threaded -with-rtsopts=-N
+  ghc-options:
+    -Wall -rtsopts -threaded -with-rtsopts=-N
+    -Wincomplete-uni-patterns -Wincomplete-record-updates
+    -- -Wmissing-import-lists
   build-depends:
       base >= 4.9 && < 5
     , tensorflow-deptyped <1.0

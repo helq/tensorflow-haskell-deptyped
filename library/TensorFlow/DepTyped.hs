@@ -1,4 +1,4 @@
--- Copyright 2017 Elkin Cruz.
+-- Copyright 2017-2018 Elkin Cruz.
 -- Copyright 2017 James Bowen.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
 -- limitations under the License.
 
 module TensorFlow.DepTyped (
-  KnownNatList(natListVal),
+  KnownNats, NatList, SomeNats,
   constant, placeholder, add, mul, matMul, argMax, softmax, scalar, oneHot,
   reduceMean, softmaxCrossEntropyWithLogits, equal, truncatedNormal, relu,
   sub, cast, square,
@@ -34,7 +34,7 @@ import TensorFlow.DepTyped.Ops (constant, placeholder, add, mul, matMul, argMax,
 import TensorFlow.DepTyped.Session (run, runWithFeeds)
 import TensorFlow.DepTyped.Tensor (Tensor, Placeholder, Feed(Feed), FeedList(NilFeedList,(:~~)), render, feed)
 import TensorFlow.DepTyped.Types (TensorData(TensorData, unTensorData), encodeTensorData)
-import TensorFlow.DepTyped.Base (KnownNatList(natListVal))
+import TensorFlow.DepTyped.Base (KnownNats, NatList, SomeNats)
 import TensorFlow.DepTyped.Variable (Variable(Variable, unVariable), initializedVariable, zeroInitializedVariable, readValue)
 import TensorFlow.DepTyped.Minimize (minimizeWith)
 

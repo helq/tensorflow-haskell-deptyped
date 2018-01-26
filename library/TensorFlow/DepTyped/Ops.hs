@@ -1,4 +1,4 @@
--- Copyright 2017 Elkin Cruz.
+-- Copyright 2017-2018 Elkin Cruz.
 -- Copyright 2017 James Bowen.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ module TensorFlow.DepTyped.Ops (
 ) where
 
 import           GHC.TypeLits (Nat, Symbol, KnownNat, natVal)
-import           Data.Proxy (Proxy(Proxy))
+import           Data.Proxy (Proxy)
 import           Data.Kind (Type)
 
 import           Data.Vector.Sized (Vector, toList)
@@ -62,9 +62,10 @@ import qualified TensorFlow.Types as TF (TensorType, Shape(Shape), type OneOf)
 import           TensorFlow.Tensor (Value)
 import           TensorFlow.Build (Build, MonadBuild)
 
-import           TensorFlow.DepTyped.Base (KnownNatList(natListVal), ShapeProduct, UnionPlaceholder,
+import           TensorFlow.DepTyped.Base (KnownNats, NatList, ShapeProduct, UnionPlaceholder,
                                            BroadcastShapes, RemoveAxisFromShape, AddAxisToEndShape)
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor), Placeholder)
+import           Data.Singletons (fromSing, sing)
 
 -- This instance allows us to write "simpler" code when we want to create a constant vector with ease
 -- e.g.,
@@ -86,18 +87,18 @@ instance ( TF.TensorType a
     negate (Tensor t) = Tensor (TF.neg t)
 
 constant :: forall (s :: [Nat]) (n :: Nat) a.
-            (TF.TensorType a, ShapeProduct s ~ n, KnownNatList s)
+            (TF.TensorType a, ShapeProduct s ~ n, KnownNats s)
          => Vector n a
          -> Tensor s '[] Build a
 constant v = Tensor $ TF.constant shape (toList v)
-  where shape = TF.Shape . fmap fromInteger $ natListVal (Proxy :: Proxy s)
+  where shape = TF.Shape . fmap fromInteger $ fromSing (sing :: NatList s)
 
 -- TODO(helq): change [Nat] for [Dim]
 placeholder :: forall (name :: Symbol) (shape :: [Nat]) a m.
-               (TF.TensorType a, KnownNatList shape, MonadBuild m)
+               (TF.TensorType a, KnownNats shape, MonadBuild m)
             => m (Placeholder name shape a)
 placeholder = Tensor <$> TF.placeholder shape
-  where shape = TF.Shape . fmap fromInteger $ natListVal (Proxy :: Proxy shape)
+  where shape = TF.Shape . fmap fromInteger $ fromSing (sing :: NatList shape)
 
 -- TODO(helq): change [Nat] for [Dim]
 add :: forall (shape1 :: [Nat]) (shape2 :: [Nat]) (phs1 :: [(Symbol, [Nat], Type)]) (phs2 :: [(Symbol, [Nat], Type)]) v1 v2 a.
@@ -179,10 +180,10 @@ equal (Tensor t1) (Tensor t2) = Tensor (t1 `TF.equal` t2)
 truncatedNormal :: forall (shape::[Nat]) a m.
                    (MonadBuild m,
                     TF.OneOf '[Word16, Double, Float] a,
-                    KnownNatList shape)
+                    KnownNats shape)
                 => m (Tensor shape '[] Value a)
 truncatedNormal = Tensor <$> TF.truncatedNormal (TF.vector shape_)
-  where shape_ = fmap fromInteger $ natListVal (Proxy :: Proxy shape)
+  where shape_ = fmap fromInteger $ fromSing (sing :: NatList shape)
 
 -- TODO(helq): change [Nat] for [Dim]
 relu :: TF.OneOf '[Int16, Int32, Int64, Int8, Word16, Word8, Double, Float] a

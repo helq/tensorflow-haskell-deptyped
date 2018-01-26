@@ -22,6 +22,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# OPTIONS_GHC -Wno-missing-import-lists #-}
 
 module TensorFlow.Examples.MNISTDeptyped.Parse (
   MNIST,

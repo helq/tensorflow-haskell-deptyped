@@ -1,4 +1,4 @@
--- Copyright 2017 Elkin Cruz.
+-- Copyright 2017-2018 Elkin Cruz.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import qualified TensorFlow.Build as TF (MonadBuild)
 import           TensorFlow.Build (Build)
 
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor))
-import           TensorFlow.DepTyped.Base (KnownNatList(natListVal))
-import           Data.Proxy (Proxy(Proxy))
+import           TensorFlow.DepTyped.Base (KnownNats, NatList)
+import           Data.Singletons (fromSing, sing)
 
 -- TODO(helq): change [Nat] for [Dim]
 newtype Variable (shape :: [Nat]) a = Variable { unVariable :: TF.Variable a }
@@ -47,9 +47,9 @@ initializedVariable (Tensor t) = Variable <$> TF.initializedVariable t
 
 -- TODO(helq): change [Nat] for [Dim]
 zeroInitializedVariable :: forall (shape :: [Nat]) a m.
-                           (TF.MonadBuild m, TF.TensorType a, Num a, KnownNatList shape) => m (Variable shape a)
+                           (TF.MonadBuild m, TF.TensorType a, Num a, KnownNats shape) => m (Variable shape a)
 zeroInitializedVariable = Variable <$> TF.zeroInitializedVariable shape
-  where shape = TF.Shape . fmap fromInteger $ natListVal (Proxy :: Proxy shape)
+  where shape = TF.Shape . fmap fromInteger $ fromSing (sing :: NatList shape)
 
 -- TODO(helq): change [Nat] for [Dim]
 readValue :: TF.TensorType a => Variable shape a -> Tensor shape '[] Build a
