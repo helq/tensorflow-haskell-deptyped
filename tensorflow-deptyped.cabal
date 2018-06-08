@@ -41,6 +41,7 @@ library
     , TensorFlow.DepTyped.Tensor
     , TensorFlow.DepTyped.Types
     , TensorFlow.DepTyped.Session
+    , TensorFlow.DepTyped.NN
     , TensorFlow.DepTyped.Ops
     , TensorFlow.DepTyped.Output
     , TensorFlow.DepTyped.Variable
