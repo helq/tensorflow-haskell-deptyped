@@ -1,11 +1,11 @@
-resolver: lts-8.13
+resolver: lts-11.12
 
 packages:
   - '.'
   - 'tensorflow-mnist-deptyped'
   - location:
       git: https://github.com/tensorflow/haskell.git
-      commit: a8405d15a22fc62dce8e868623e12a83e11f56b8
+      commit: 8e1d85b5e5bd56d54ff6d463c8581c57ab5526d9
     subdirs:
       - tensorflow
       - tensorflow-core-ops
@@ -20,7 +20,8 @@ packages:
       - tensorflow-test
     extra-dep: true
 extra-deps:
-  - proto-lens-protobuf-types-0.2.1.0
+  - haskell-src-exts-1.19.1
+  - proto-lens-protobuf-types-0.2.2.0
   - proto-lens-0.2.2.0
   - proto-lens-protoc-0.2.2.3
   - proto-lens-descriptors-0.2.2.0
