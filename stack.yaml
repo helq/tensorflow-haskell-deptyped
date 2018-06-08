@@ -1,4 +1,4 @@
-resolver: lts-8.13
+resolver: lts-11.12
 
 packages:
   - '.'
@@ -20,6 +20,7 @@ packages:
       - tensorflow-test
     extra-dep: true
 extra-deps:
+  - haskell-src-exts-1.19.1
   - proto-lens-protobuf-types-0.2.2.0
   - proto-lens-0.2.2.0
   - proto-lens-protoc-0.2.2.3
