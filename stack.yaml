@@ -1,11 +1,11 @@
-resolver: lts-11.12
+resolver: lts-11.18
 
 packages:
   - '.'
   - 'tensorflow-mnist-deptyped'
   - location:
       git: https://github.com/tensorflow/haskell.git
-      commit: 8e1d85b5e5bd56d54ff6d463c8581c57ab5526d9
+      commit: c731a6f768c2f0285632b0b2097b2682a0c45861
     subdirs:
       - tensorflow
       - tensorflow-core-ops
