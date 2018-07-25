@@ -24,6 +24,7 @@
 module TensorFlow.DepTyped.Base (
   KnownNatList(natListVal),
   ShapeProduct,
+  KnownNatListLength,
   AddPlaceholder,
   UnionPlaceholder,
   PlaceholderNotInList,
@@ -33,7 +34,8 @@ module TensorFlow.DepTyped.Base (
   AddAxisToEndShape
 ) where
 
-import           GHC.TypeLits (Nat, KnownNat, natVal, type (*), Symbol, TypeError, ErrorMessage(Text, ShowType, (:<>:)), type (-))
+import           GHC.TypeLits (Nat, KnownNat, natVal, type (*), Symbol, TypeError, ErrorMessage(Text, ShowType,
+                               (:<>:)), type (-), type (+))
 import           Data.Proxy (Proxy(Proxy))
 import           Data.Promotion.Prelude (type If, type (:<), type (:>), type (:||), type (:==), type Reverse, type Length)
 import           Data.Kind (Constraint, Type)
@@ -46,6 +48,10 @@ instance KnownNatList '[] where
 -- Inductive step
 instance (KnownNat n, KnownNatList ns) => KnownNatList (n ': ns) where
   natListVal _ = natVal (Proxy :: Proxy n) : natListVal (Proxy :: Proxy ns)
+
+type family KnownNatListLength (s :: [Nat]) :: Nat where
+  KnownNatListLength '[] = 0
+  KnownNatListLength (_ ': s) = 1 + KnownNatListLength s
 
 type family ShapeProduct (s :: [Nat]) :: Nat where
   ShapeProduct '[] = 1
