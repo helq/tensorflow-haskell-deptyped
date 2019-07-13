@@ -21,6 +21,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE RankNTypes          #-}
+{-# LANGUAGE NoStarIsType        #-}
 
 import Control.Monad (forM_, forM, when)
 import Control.Monad.IO.Class (liftIO)
