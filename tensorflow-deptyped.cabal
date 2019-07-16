@@ -28,9 +28,9 @@ library
   ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-import-lists
   build-depends:
       base >= 4.9 && < 5
-    , tensorflow
-    , tensorflow-ops
-    , tensorflow-core-ops
+    , tensorflow >= 0.2.0.0 && < 0.3
+    , tensorflow-ops >= 0.2.0.0 && < 0.3
+    , tensorflow-core-ops >= 0.2.0.0 && < 0.3
     , singletons >= 2.5 && < 2.6
     , vector
     , vector-sized

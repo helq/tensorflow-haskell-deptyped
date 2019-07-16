@@ -28,9 +28,9 @@ library
                 , lens-family
                 , containers
                 , split
-                , tensorflow-proto == 0.2.*
-                , tensorflow-core-ops == 0.2.*
-                , tensorflow
+                , tensorflow-proto >= 0.2.0.0 && < 0.3
+                , tensorflow-core-ops >= 0.2.0.0 && < 0.3
+                , tensorflow >= 0.2.0.0 && < 0.3
                 , text
                 , vector
                 , vector-sized
@@ -49,8 +49,8 @@ executable mnist-deptyped
                , tensorflow
                , tensorflow-mnist-deptyped
                , tensorflow-mnist-input-data
-               , tensorflow-ops
-               , tensorflow-proto
+               , tensorflow-ops >= 0.2.0.0 && < 0.3
+               , tensorflow-proto >= 0.2.0.0 && < 0.3
                , text
                , transformers
                , vector
