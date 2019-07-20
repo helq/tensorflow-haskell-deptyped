@@ -22,6 +22,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE NoStarIsType #-}
 
 module TensorFlow.Examples.MNISTDeptyped.Parse (
   MNIST,
