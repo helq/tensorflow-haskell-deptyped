@@ -6,7 +6,7 @@ category:       Machine Learning
 homepage:       https://github.com/helq/tensorflow-haskell-deptyped#readme
 bug-reports:    https://github.com/helq/tensorflow-haskell-deptyped/issues
 maintainer:     Elkin Cruz
--- Is sad that I cannot put a dual license in here :/
+-- It's sad that I cannot put a dual license in here :/
 license:        BSD3
 build-type:     Simple
 cabal-version:  >= 1.10
@@ -28,10 +28,10 @@ library
   ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-import-lists
   build-depends:
       base >= 4.9 && < 5
-    , tensorflow
-    , tensorflow-ops
-    , tensorflow-core-ops
-    , singletons
+    , tensorflow >= 0.2.0.0 && < 0.3
+    , tensorflow-ops >= 0.2.0.0 && < 0.3
+    , tensorflow-core-ops >= 0.2.0.0 && < 0.3
+    , singletons >= 2.5 && < 2.6
     , vector
     , vector-sized
     , bytestring
@@ -41,6 +41,7 @@ library
     , TensorFlow.DepTyped.Tensor
     , TensorFlow.DepTyped.Types
     , TensorFlow.DepTyped.Session
+    , TensorFlow.DepTyped.NN
     , TensorFlow.DepTyped.Ops
     , TensorFlow.DepTyped.Output
     , TensorFlow.DepTyped.Variable

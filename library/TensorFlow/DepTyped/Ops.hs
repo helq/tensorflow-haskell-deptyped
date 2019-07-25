@@ -39,7 +39,10 @@ module TensorFlow.DepTyped.Ops (
   relu,
   sub,
   cast,
-  square
+  square,
+  reshape,
+  sigmoid,
+  shape
 ) where
 
 import           GHC.TypeLits (Nat, Symbol)
@@ -54,15 +57,16 @@ import           Data.ByteString (ByteString)
 import qualified TensorFlow.Ops as TF (constant, add, matMul, placeholder, argMax, scalar,
                                        softmax, oneHot, reduceMean, softmaxCrossEntropyWithLogits,
                                        equal, truncatedNormal, vector, mul, relu, sub, cast, abs, sign,
-                                       neg)
-import qualified TensorFlow.GenOps.Core as TF (square)
+                                       neg, reshape, shape)
+import qualified TensorFlow.GenOps.Core as TF (square, sigmoid)
 import qualified TensorFlow.Types as TF (TensorType, Shape(Shape), type OneOf)
 --import qualified TensorFlow.Tensor as TF (Tensor)
 import           TensorFlow.Tensor (Value)
 import           TensorFlow.Build (Build, MonadBuild)
 
 import           TensorFlow.DepTyped.Base (KnownNats, NatList, ShapeProduct, UnionPlaceholder,
-                                           BroadcastShapes, RemoveAxisFromShape, AddAxisToEndShape)
+                                           BroadcastShapes, RemoveAxisFromShape, AddAxisToEndShape,
+                                           KnownNatListLength)
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor), Placeholder)
 import           Data.Singletons (fromSing, sing, Sing, SingI)
 
@@ -89,15 +93,15 @@ constant :: forall (s :: [Nat]) (n :: Nat) a.
             (TF.TensorType a, ShapeProduct s ~ n, KnownNats s)
          => Vector n a
          -> Tensor s '[] Build a
-constant v = Tensor $ TF.constant shape (toList v)
-  where shape = TF.Shape . fmap fromInteger $ fromSing (sing :: NatList s)
+constant v = Tensor $ TF.constant shape' (toList v)
+  where shape' = TF.Shape . fmap fromIntegral $ fromSing (sing :: NatList s)
 
 -- TODO(helq): change [Nat] for [Dim]
 placeholder :: forall (name :: Symbol) (shape :: [Nat]) a m.
                (TF.TensorType a, KnownNats shape, MonadBuild m)
             => m (Placeholder name shape a)
-placeholder = Tensor <$> TF.placeholder shape
-  where shape = TF.Shape . fmap fromInteger $ fromSing (sing :: NatList shape)
+placeholder = Tensor <$> TF.placeholder shape'
+  where shape' = TF.Shape . fmap fromIntegral $ fromSing (sing :: NatList shape)
 
 -- TODO(helq): change [Nat] for [Dim]
 add :: forall (shape1 :: [Nat]) (shape2 :: [Nat]) (phs1 :: [(Symbol, [Nat], Type)]) (phs2 :: [(Symbol, [Nat], Type)]) v1 v2 a.
@@ -129,7 +133,7 @@ argMax :: forall (n::Nat) (output_shape::[Nat]) (shape::[Nat]) (phs::[(Symbol,[N
        => Sing n
        -> Tensor shape phs v t
        -> Tensor output_shape phs Build output_type
-argMax s (Tensor t) = Tensor $ TF.argMax t (TF.scalar (fromInteger $ fromSing s :: Int64))
+argMax s (Tensor t) = Tensor $ TF.argMax t (TF.scalar (fromIntegral $ fromSing s :: Int64))
 
 -- TODO(helq): change [Nat] for [Dim]
 softmax :: (TF.OneOf '[Word16, Double, Float] t, SingI (batchSize :: Nat), SingI (outs :: Nat))
@@ -151,7 +155,7 @@ oneHot :: (TF.TensorType t,
        -> Tensor '[1] '[] v'3 t
        -> Tensor shape phs v'1 tI
        -> Tensor output_shape phs Build t
-oneHot s (Tensor t1) (Tensor t2) (Tensor tinput) = Tensor $ TF.oneHot tinput (TF.scalar (fromInteger $ fromSing s :: Int32)) t1 t2
+oneHot s (Tensor t1) (Tensor t2) (Tensor tinput) = Tensor $ TF.oneHot tinput (TF.scalar (fromIntegral $ fromSing s :: Int32)) t1 t2
 
 -- TODO(helq): change [Nat] for [Dim]
 reduceMean :: forall (shape::[Nat]) (phs::[(Symbol,[Nat],Type)]) a v.
@@ -181,7 +185,7 @@ truncatedNormal :: forall (shape::[Nat]) a m.
                     KnownNats shape)
                 => m (Tensor shape '[] Value a)
 truncatedNormal = Tensor <$> TF.truncatedNormal (TF.vector shape_)
-  where shape_ = fmap fromInteger $ fromSing (sing :: NatList shape)
+  where shape_ = fmap fromIntegral $ fromSing (sing :: NatList shape)
 
 -- TODO(helq): change [Nat] for [Dim]
 relu :: TF.OneOf '[Int16, Int32, Int64, Int8, Word16, Word8, Double, Float] a
@@ -197,3 +201,21 @@ cast (Tensor t) = Tensor $ TF.cast t
 square :: TF.OneOf '[(Complex Double), (Complex Float), Int32, Int64, Word16, Double, Float] a
     => Tensor shape phs v a -> Tensor shape phs Build a
 square (Tensor t) = Tensor (TF.square t)
+
+reshape :: forall t shape1 shape2 phs v.
+           (TF.TensorType t, ShapeProduct shape1 ~ ShapeProduct shape2, KnownNats shape2)
+        => Tensor shape1 phs v t
+        -> Tensor shape2 phs Build t
+reshape (Tensor t) = Tensor $ TF.reshape t $ TF.vector
+  (map fromIntegral (fromSing (sing :: NatList shape2)) :: [Int64])
+
+sigmoid :: forall (phs::[(Symbol,[Nat],Type)]) a v s.
+           TF.OneOf '[Complex Double, Complex Float, Word16, Double, Float] a
+        =>   Tensor s phs v a -> Tensor s phs Build a
+sigmoid (Tensor t) = Tensor (TF.sigmoid t)
+
+shape :: forall t shape phs v.
+         (TF.TensorType t, KnownNats shape) -- , TF.OneOf '[Int32, Int64] out_type
+       => Tensor shape phs v t
+       -> Tensor '[KnownNatListLength shape] phs Build Int32
+shape (Tensor t) = Tensor (TF.shape t)

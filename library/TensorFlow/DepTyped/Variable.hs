@@ -49,7 +49,7 @@ initializedVariable (Tensor t) = Variable <$> TF.initializedVariable t
 zeroInitializedVariable :: forall (shape :: [Nat]) a m.
                            (TF.MonadBuild m, TF.TensorType a, Num a, KnownNats shape) => m (Variable shape a)
 zeroInitializedVariable = Variable <$> TF.zeroInitializedVariable shape
-  where shape = TF.Shape . fmap fromInteger $ fromSing (sing :: NatList shape)
+  where shape = TF.Shape . fmap fromIntegral $ fromSing (sing :: NatList shape)
 
 -- TODO(helq): change [Nat] for [Dim]
 readValue :: TF.TensorType a => Variable shape a -> Tensor shape '[] Build a

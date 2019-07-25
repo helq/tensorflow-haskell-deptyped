@@ -1,27 +1,27 @@
-resolver: lts-10.1
+resolver: lts-13.13
 
 packages:
   - '.'
   - 'tensorflow-mnist-deptyped'
   - 'tensorflow-deptyped-examples'
-  - location:
-      git: https://github.com/tensorflow/haskell.git
-      commit: a8405d15a22fc62dce8e868623e12a83e11f56b8
+
+extra-deps:
+  - git: https://github.com/tensorflow/haskell.git
+    commit: 26eebce98f1e5fc924c5141fbe3f400f8f0cfde8
     subdirs:
       - tensorflow
       - tensorflow-core-ops
-      - tensorflow-logging
-      - tensorflow-mnist
       - tensorflow-mnist-input-data
       - tensorflow-opgen
       - tensorflow-ops
       - tensorflow-proto
-      - tensorflow-records
-      - tensorflow-records-conduit
-      - tensorflow-test
-    extra-dep: true
-
-extra-deps:
+  - haskell-src-exts-1.21.0
+  - proto-lens-0.4.0.1
+  - proto-lens-protobuf-types-0.4.0.1
+  - proto-lens-runtime-0.4.0.2
+  - proto-lens-setup-0.4.0.2
+  - lens-labels-0.3.0.1
+  - proto-lens-protoc-0.4.0.2
   - snappy-0.2.0.2
   - snappy-framing-0.1.1
 

@@ -21,12 +21,14 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TypeInType           #-}
 {-# LANGUAGE ConstraintKinds      #-}
+{-# LANGUAGE NoStarIsType         #-}
 
 module TensorFlow.DepTyped.Base (
   KnownNats,
   NatList,
   SomeNats,
   ShapeProduct,
+  KnownNatListLength,
   AddPlaceholder,
   UnionPlaceholder,
   PlaceholderNotInList,
@@ -36,8 +38,9 @@ module TensorFlow.DepTyped.Base (
   AddAxisToEndShape
 ) where
 
-import           GHC.TypeLits (Nat, type (*), Symbol, TypeError, ErrorMessage(Text, ShowType, (:<>:)), type (-))
-import           Data.Promotion.Prelude (type If, type (:<), type (:>), type (:||), type (:==), type Reverse, type Length)
+import           GHC.TypeLits (Nat, type (*), Symbol, TypeError, ErrorMessage(Text, ShowType, (:<>:)), type (-), type (+))
+import           Data.Singletons.Prelude (type If, type (<), type (>), type (||), type (==), type Reverse)
+import           Data.Singletons.Prelude.Foldable (type Length)
 import           Data.Kind (Constraint, Type)
 import           Data.Singletons (SingI, SomeSing, Sing)
 
@@ -47,6 +50,10 @@ import           Data.Singletons (SingI, SomeSing, Sing)
 type KnownNats (xs :: [Nat]) = SingI xs
 type NatList (xs :: [Nat]) = Sing xs -- gives us the same as KnownNats
 type SomeNats = SomeSing [Nat]
+
+type family KnownNatListLength (s :: [Nat]) :: Nat where
+  KnownNatListLength '[] = 0
+  KnownNatListLength (_ ': s) = 1 + KnownNatListLength s
 
 type family ShapeProduct (s :: [Nat]) :: Nat where
   ShapeProduct '[] = 1
@@ -59,11 +66,11 @@ type family AddPlaceholder (name :: Symbol) (shape :: [Nat]) (t :: Type) (placeh
   AddPlaceholder n s t '[] = '[ '(n, s, t) ]
   AddPlaceholder n s t ('(n, s, t) ': phs) = '(n, s, t) ': phs
   AddPlaceholder n1 s1 t1 ('(n2, s2, t2) ': phs) =
-                   If (n1 :< n2)
+                   If (n1 < n2)
                       ('(n1, s1, t1) ': '(n2, s2, t2) ': phs)
-                  (If (n1 :> n2)
+                  (If (n1 > n2)
                       ('(n2, s2, t2) ': AddPlaceholder n1 s1 t1 phs)
-                  (If (t1 :== t2)
+                  (If (t1 == t2)
                       (TypeError ('Text "The placeholder " ':<>: 'ShowType n1 ':<>:
                                   'Text " appears to have defined two different shapes " ':<>:
                                   'ShowType s1 ':<>: 'Text " and " ':<>: 'ShowType s2))
@@ -111,9 +118,9 @@ type family BroadcastShapes' (revshape1::[Nat]) (revshape2::[Nat]) (shape1::[Nat
   BroadcastShapes' '[] shape2 _ _ = shape2
   BroadcastShapes' shape1 '[] _ _ = shape1
   BroadcastShapes' (n:shape1) (m:shape2) origshape1 origshape2 =
-    If (n:==1 :|| n:==m)
+    If (n == 1 || n == m)
         (m : BroadcastShapes' shape1 shape2 origshape1 origshape2)
-        (If (m:==1)
+        (If (m == 1)
              (n : BroadcastShapes' shape1 shape2 origshape1 origshape2)
              (TypeError ('Text "Error: shapes " ':<>: 'ShowType origshape1
                             ':<>: 'Text " and " ':<>: 'ShowType origshape2

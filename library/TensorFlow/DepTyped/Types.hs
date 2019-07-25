@@ -43,4 +43,4 @@ encodeTensorData :: forall a (name :: Symbol) (shape :: [Nat]) (n :: Nat).
                  => Vector n a
                  -> TensorData name shape a
 encodeTensorData v = TensorData (TF.encodeTensorData shape $ fromSized v :: TF.TensorData a)
-  where shape = TF.Shape . fmap fromInteger $ fromSing (sing :: NatList shape) -- NatList s == Sing (s::[Nat]) or in this case Sing s
+  where shape = TF.Shape . fmap fromIntegral $ fromSing (sing :: NatList shape) -- NatList s == Sing (s::[Nat]) or in this case Sing s
