@@ -40,5 +40,4 @@ import TensorFlow.DepTyped.Variable (Variable(Variable, unVariable), initialized
 import TensorFlow.DepTyped.Minimize (minimizeWith)
 import TensorFlow.DepTyped.NN (sigmoidCrossEntropyWithLogits)
 
-import TensorFlow.Core (Build, Value, Ref, MonadBuild)
-import TensorFlow.Session (Session, runSession)
+import TensorFlow.Core (Build, Value, Ref, MonadBuild, Session, runSession)
