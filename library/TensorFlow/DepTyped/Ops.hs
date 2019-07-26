@@ -142,7 +142,7 @@ softmax :: (TF.OneOf '[Word16, Double, Float] t, SingI (batchSize :: Nat), SingI
 softmax (Tensor t) = Tensor $ TF.softmax t
 
 -- TODO(helq): change [Nat] for [Dim]
-scalar :: TF.TensorType a => a -> Tensor '[1] '[] Build a
+scalar :: TF.TensorType a => a -> Tensor '[] '[] Build a
 scalar = Tensor . TF.scalar
 
 -- TODO(helq): change [Nat] for [Dim]

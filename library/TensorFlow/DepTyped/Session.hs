@@ -78,8 +78,9 @@ instance (FS.Storable a,
 
 instance (FS.Storable a,
           TF.TensorDataType VN.Vector a,
+          ShapeProduct shape ~ 1,
           SortPlaceholderList feedlist_phs ~ phs)
-       => Runnable feedlist_phs (Tensor '[1] phs v a) (TF.Scalar a) a where
+       => Runnable feedlist_phs (Tensor shape phs v a) (TF.Scalar a) a where
   runWithFeeds feeds (Tensor t) = TF.runWithFeeds (getListFeeds feeds) t
   run (Tensor t) = TF.run t
 

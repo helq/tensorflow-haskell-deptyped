@@ -19,7 +19,7 @@ module TensorFlow.DepTyped (
   reduceMean, softmaxCrossEntropyWithLogits, equal, truncatedNormal, relu,
   sub, cast, square, reshape, shape, sigmoid,
   run, runWithFeeds,
-  Tensor, Placeholder, Feed(Feed), FeedList(NilFeedList,(:~~)), render, feed,
+  Scalar(Scalar), Tensor, Placeholder, Feed(Feed), FeedList(NilFeedList,(:~~)), render, feed,
   TensorData(TensorData, unTensorData), encodeTensorData,
   Variable(Variable, unVariable), initializedVariable, zeroInitializedVariable, readValue,
   minimizeWith,
@@ -40,4 +40,4 @@ import TensorFlow.DepTyped.Variable (Variable(Variable, unVariable), initialized
 import TensorFlow.DepTyped.Minimize (minimizeWith)
 import TensorFlow.DepTyped.NN (sigmoidCrossEntropyWithLogits)
 
-import TensorFlow.Core (Build, Value, Ref, MonadBuild, Session, runSession)
+import TensorFlow.Core (Build, Value, Ref, MonadBuild, Session, Scalar(Scalar), runSession)

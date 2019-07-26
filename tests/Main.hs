@@ -5,7 +5,7 @@ module Main where
 
 import System.Random (randomIO)
 import Data.Int (Int32)
-import Data.Vector.Sized (Vector, replicateM, fromTuple, index)
+import Data.Vector.Sized (Vector, replicateM, fromTuple, index, empty)
 
 import Test.HUnit (assertEqual)
 import Test.HUnit.Approx (assertApproxEqual)
@@ -46,9 +46,20 @@ testSigmoid = testCase "DepTyped Op Sigmoid" $ do
   assertApproxEqual "sigmoid(1000)"  0.0001 1.0        $ index result 4
 
 
+testScalar :: Test
+testScalar = testCase "DepTyped Op Scalar" $ do
+  let num = 1000
+  shape <- TF.runSession $ do
+    let scalar = TF.scalar num :: TF.Tensor '[] '[] TF.Build Float
+    let shape = TF.shape scalar
+    TF.run shape
+  assertEqual "Shape is correct" empty shape
+
+
 main :: IO ()
 main = defaultMain
   [ testReshape
   , testShape
   , testSigmoid
+  , testScalar
   ]
