@@ -42,7 +42,7 @@ import           Data.Kind (Type)
 
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor), FeedList(NilFeedList,(:~~)), Feed(Feed))
 import           TensorFlow.DepTyped.Output (ControlNode(ControlNode))
-import           TensorFlow.DepTyped.Base (ShapeProduct, SortPlaceholderList)
+import           TensorFlow.DepTyped.Base (Product, SortPlaceholderList)
 
 -- TODO(helq): find a way to created "dependent typed" version of run_ and runWithFeeds_
 
@@ -68,7 +68,7 @@ instance SortPlaceholderList feedlist_phs ~ phs => Runnable feedlist_phs (Contro
 instance (FS.Storable a,
           TF.TensorDataType VN.Vector a,
           KnownNat n, -- This KnownNat didn't get replaced by SingI because toSized requires KnownNat
-          ShapeProduct shape ~ n,
+          Product shape ~ n,
           SortPlaceholderList feedlist_phs ~ phs)
        => Runnable feedlist_phs (Tensor shape phs v a) (Vector n a) a where
   runWithFeeds feeds (Tensor t) = fromMaybe (error "possible size mismatch between output vector and tensor shape, this should never happen :S")
@@ -78,7 +78,7 @@ instance (FS.Storable a,
 
 instance (FS.Storable a,
           TF.TensorDataType VN.Vector a,
-          ShapeProduct shape ~ 1,
+          Product shape ~ 1,
           SortPlaceholderList feedlist_phs ~ phs)
        => Runnable feedlist_phs (Tensor shape phs v a) (TF.Scalar a) a where
   runWithFeeds feeds (Tensor t) = TF.runWithFeeds (getListFeeds feeds) t

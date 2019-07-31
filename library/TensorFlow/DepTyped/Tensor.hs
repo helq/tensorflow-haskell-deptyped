@@ -28,6 +28,7 @@
 module TensorFlow.DepTyped.Tensor (
   Tensor(Tensor),
   Placeholder,
+  Renderable,
   Feed(Feed),
   FeedList(NilFeedList,(:~~)),
   render,
@@ -40,7 +41,7 @@ import           Data.Kind (Type)
 import           TensorFlow.Build (Build, MonadBuild)
 import           TensorFlow.Tensor (Value)
 import qualified TensorFlow.Tensor as TF (Feed, feed, Tensor, render)
-import qualified TensorFlow.Types as TF (TensorType)
+import qualified TensorFlow.Types as TF ()
 
 import           TensorFlow.DepTyped.Base (PlaceholderNotInList)
 import           TensorFlow.DepTyped.Types (TensorData(TensorData))
@@ -58,10 +59,11 @@ import           TensorFlow.DepTyped.Types (TensorData(TensorData))
 --data Tensor (s :: [Dim]) (te :: TensorEnvironment) v a where
 --  Tensor :: (TF.TensorType a) => TF.Tensor v a -> Tensor s te v a
 
-data Tensor (s :: [Nat]) (p :: [(Symbol, [Nat], Type)]) v a where
-  Tensor :: (TF.TensorType a) => TF.Tensor v a -> Tensor s p v a
+newtype Tensor (shape :: [Nat]) (placeholders :: [(Symbol, [Nat], Type)]) v a = Tensor (TF.Tensor v a)
 
 type Placeholder name shape t = Tensor shape '[ '(name, shape, t) ] Value t
+
+type Renderable shape t = Tensor shape '[] Build t
 
 newtype Feed (name :: Symbol) (shape :: [Nat]) (a :: Type) = Feed TF.Feed
 

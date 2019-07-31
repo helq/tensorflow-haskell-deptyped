@@ -45,6 +45,15 @@ testSigmoid = testCase "DepTyped Op Sigmoid" $ do
   assertApproxEqual "sigmoid(1)"     0.0001 0.73105857 $ index result 3
   assertApproxEqual "sigmoid(1000)"  0.0001 1.0        $ index result 4
 
+testMatMult :: Test
+testMatMult = testCase "DepTyped Op MatMul" $ do
+  vector1 <- replicateM randomIO :: IO (Vector 6 Float)
+  vector2 <- replicateM randomIO :: IO (Vector 12 Float)
+  result :: Vector 8 Float <- TF.runSession $ do
+    let tensor1 = TF.constant vector1 :: TF.Tensor '[2, 3] '[] TF.Build Float
+    let tensor2 = TF.constant vector2 :: TF.Tensor '[3, 4] '[] TF.Build Float
+    TF.run $ TF.matMul tensor1 tensor2
+  pure ()
 
 testScalar :: Test
 testScalar = testCase "DepTyped Op Scalar" $ do
@@ -61,5 +70,6 @@ main = defaultMain
   [ testReshape
   , testShape
   , testSigmoid
+  , testMatMult
   , testScalar
   ]

@@ -24,43 +24,39 @@
 {-# LANGUAGE NoStarIsType         #-}
 
 module TensorFlow.DepTyped.Base (
-  KnownNats,
-  NatList,
-  SomeNats,
-  ShapeProduct,
-  KnownNatListLength,
   AddPlaceholder,
   UnionPlaceholder,
   PlaceholderNotInList,
   SortPlaceholderList,
   BroadcastShapes,
   RemoveAxisFromShape,
-  AddAxisToEndShape
+  -- Aliases
+  KnownNat,
+  KnownNats,
+  NatSing,
+  NatList,
+  SomeNats,
+  -- Reexports
+  type (++),
+  Length,
+  Product,
 ) where
 
 import           GHC.TypeLits (Nat, type (*), Symbol, TypeError, ErrorMessage(Text, ShowType, (:<>:)), type (-), type (+))
-import           Data.Singletons.Prelude (type If, type (<), type (>), type (||), type (==), type Reverse)
-import           Data.Singletons.Prelude.Foldable (type Length)
+import           Data.Singletons.Prelude (type If, type (<), type (>), type (||), type (==), type Reverse, type (++))
+import           Data.Singletons.Prelude.Foldable (type Length, type Product)
 import           Data.Kind (Constraint, Type)
 import           Data.Singletons (SingI, SomeSing, Sing)
 
 --data Dim = D Nat | NoDim Symbol
 
--- Reconsider removing this three definitions to use raw singletons instead
+-- Similar to the @GHC.TypeLits.KnownNat@,
+-- but more in line with other singletons-derived types and constraints
+type KnownNat (n :: Nat) = SingI n
 type KnownNats (xs :: [Nat]) = SingI xs
+type NatSing (n :: Nat) = Sing n
 type NatList (xs :: [Nat]) = Sing xs -- gives us the same as KnownNats
 type SomeNats = SomeSing [Nat]
-
-type family KnownNatListLength (s :: [Nat]) :: Nat where
-  KnownNatListLength '[] = 0
-  KnownNatListLength (_ ': s) = 1 + KnownNatListLength s
-
-type family ShapeProduct (s :: [Nat]) :: Nat where
-  ShapeProduct '[] = 1
-  ShapeProduct (m ': s) = m * ShapeProduct s
-
--- TODO(helq): should this type be added?, it's superflous and doesn't add much more than some nice looking name, but it hides what the real type underneat is
---type Constant shape t = Tensor shape '[] Build t
 
 type family AddPlaceholder (name :: Symbol) (shape :: [Nat]) (t :: Type) (placeholders :: [(Symbol, [Nat], Type)]) where
   AddPlaceholder n s t '[] = '[ '(n, s, t) ]
@@ -137,7 +133,3 @@ type family RemoveAxisFromShape' (idx::Nat) (shape::[Nat]) (idxorig::Nat) (shape
                                                         'ShowType (Length shape) ':<>: 'Text "]" )
   RemoveAxisFromShape' 0 (_:shs) _ _ = shs
   RemoveAxisFromShape' n (sh:shs) idx shape = sh : RemoveAxisFromShape' (n-1) shs idx shape
-
-type family AddAxisToEndShape (shape::[Nat]) (axisSize::Nat) :: [Nat] where
-  AddAxisToEndShape '[] axis = '[axis]
-  AddAxisToEndShape (s:shs) axis = s : AddAxisToEndShape shs axis

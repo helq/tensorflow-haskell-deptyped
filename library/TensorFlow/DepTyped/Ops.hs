@@ -20,6 +20,7 @@
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances    #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module TensorFlow.DepTyped.Ops (
@@ -54,21 +55,24 @@ import           Data.Word (Word8, Word16)
 import           Data.Complex (Complex)
 import           Data.ByteString (ByteString)
 
-import qualified TensorFlow.Ops as TF (constant, add, matMul, placeholder, argMax, scalar,
-                                       softmax, oneHot, reduceMean, softmaxCrossEntropyWithLogits,
-                                       equal, truncatedNormal, vector, mul, relu, sub, cast, abs, sign,
-                                       neg, reshape, shape)
+import qualified TensorFlow.Ops as TF (
+    constant, add, matMul, placeholder, argMax, scalar,
+    softmax, oneHot, reduceMean, softmaxCrossEntropyWithLogits,
+    equal, truncatedNormal, vector, mul, relu, sub, cast, abs, sign,
+    neg, reshape, shape
+  )
 import qualified TensorFlow.GenOps.Core as TF (square, sigmoid)
 import qualified TensorFlow.Types as TF (TensorType, Shape(Shape), type OneOf)
 --import qualified TensorFlow.Tensor as TF (Tensor)
 import           TensorFlow.Tensor (Value)
 import           TensorFlow.Build (Build, MonadBuild)
 
-import           TensorFlow.DepTyped.Base (KnownNats, NatList, ShapeProduct, UnionPlaceholder,
-                                           BroadcastShapes, RemoveAxisFromShape, AddAxisToEndShape,
-                                           KnownNatListLength)
+import           TensorFlow.DepTyped.Base (
+    NatSing, KnownNat, KnownNats, NatList, Product, UnionPlaceholder,
+    BroadcastShapes, RemoveAxisFromShape, type (++), Length
+  )
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor), Placeholder)
-import           Data.Singletons (fromSing, sing, Sing, SingI)
+import           Data.Singletons (fromSing, sing)
 
 -- This instance allows us to write "simpler" code when we want to create a constant vector with ease
 -- e.g.,
@@ -77,10 +81,9 @@ import           Data.Singletons (fromSing, sing, Sing, SingI)
 -- w has type "Tensor '[1] '[] Build a"
 instance ( TF.TensorType a
          , Num a
-         , shps ~ '[]
          , v ~ Build
          , TF.OneOf '[ Double, Float, Int32, Int64
-                     , Complex Float, Complex Double] a) => Num (Tensor s shps v a) where
+                     , Complex Float, Complex Double] a) => Num (Tensor s '[] v a) where
     (Tensor t1) + (Tensor t2) = Tensor (t1 `TF.add` t2)
     (Tensor t1) * (Tensor t2) = Tensor (t1 `TF.mul` t2)
     (Tensor t1) - (Tensor t2) = Tensor (t1 `TF.sub` t2)
@@ -90,7 +93,7 @@ instance ( TF.TensorType a
     negate (Tensor t) = Tensor (TF.neg t)
 
 constant :: forall (s :: [Nat]) (n :: Nat) a.
-            (TF.TensorType a, ShapeProduct s ~ n, KnownNats s)
+            (TF.TensorType a, Product s ~ n, KnownNats s)
          => Vector n a
          -> Tensor s '[] Build a
 constant v = Tensor $ TF.constant shape' (toList v)
@@ -119,24 +122,26 @@ mul :: TF.OneOf '[(Complex Double), (Complex Float), Int16, Int32, Int64, Int8, 
 mul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.mul` t2)
 
 -- TODO(helq): change [Nat] for [Dim]
-matMul :: forall (shapeout::[Nat]) (n::Nat) a (i::Nat) (o::Nat) (p::[(Symbol, [Nat], Type)]) (q::[(Symbol, [Nat], Type)]) v'1 v'2.
-          (TF.OneOf '[(Complex Double), (Complex Float), Int32, Word16, Double, Float] a,
-           shapeout ~ '[i,o])
-       => Tensor '[i,n] p v'1 a -> Tensor '[n,o] q v'2 a -> Tensor '[i,o] (UnionPlaceholder p q) Build a
+matMul :: forall (n :: Nat) (i :: Nat) (o :: Nat)
+          (p :: [(Symbol, [Nat], Type)]) (q :: [(Symbol, [Nat], Type)])
+          a v'1 v'2 .
+          (TF.OneOf '[(Complex Double), (Complex Float), Int32, Word16, Double, Float] a)
+       => Tensor '[n, i] p v'1 a
+       -> Tensor '[i, o] q v'2 a
+       -> Tensor '[n, o] (UnionPlaceholder p q) Build a
 matMul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.matMul` t2)
 
 -- TODO(helq): change [Nat] for [Dim]
-argMax :: forall (n::Nat) (output_shape::[Nat]) (shape::[Nat]) (phs::[(Symbol,[Nat],Type)]) t output_type v.
-          (output_shape ~ RemoveAxisFromShape n shape,
-           TF.OneOf '[(Complex Double), (Complex Float), Int16, Int32, Int64, Int8, Word16, Word8, Double, Float] t,
+argMax :: forall (n::Nat) (shapeInput::[Nat]) (phs::[(Symbol,[Nat],Type)]) t output_type v.
+          (TF.OneOf '[(Complex Double), (Complex Float), Int16, Int32, Int64, Int8, Word16, Word8, Double, Float] t,
            TF.OneOf '[Int32, Int64] output_type)
-       => Sing n
-       -> Tensor shape phs v t
-       -> Tensor output_shape phs Build output_type
+       => NatSing n
+       -> Tensor shapeInput phs v t
+       -> Tensor (RemoveAxisFromShape n shapeInput) phs Build output_type
 argMax s (Tensor t) = Tensor $ TF.argMax t (TF.scalar (fromIntegral $ fromSing s :: Int64))
 
 -- TODO(helq): change [Nat] for [Dim]
-softmax :: (TF.OneOf '[Word16, Double, Float] t, SingI (batchSize :: Nat), SingI (outs :: Nat))
+softmax :: (TF.OneOf '[Word16, Double, Float] t, KnownNat batchSize, KnownNat outs)
         => Tensor '[batchSize, outs] phs v t
         -> Tensor '[batchSize, outs] phs Build t
 softmax (Tensor t) = Tensor $ TF.softmax t
@@ -147,14 +152,13 @@ scalar = Tensor . TF.scalar
 
 -- TODO(helq): change [Nat] for [Dim]
 oneHot :: (TF.TensorType t,
-           SingI (n :: Nat),
-           TF.OneOf '[Int32, Int64, Word8] tI,
-           output_shape ~ AddAxisToEndShape shape n)
-       => Sing n
+           KnownNat n,
+           TF.OneOf '[Int32, Int64, Word8] tI)
+       => NatSing n
        -> Tensor '[1] '[] v'2 t
        -> Tensor '[1] '[] v'3 t
        -> Tensor shape phs v'1 tI
-       -> Tensor output_shape phs Build t
+       -> Tensor (shape ++ '[n]) phs Build t
 oneHot s (Tensor t1) (Tensor t2) (Tensor tinput) = Tensor $ TF.oneHot tinput (TF.scalar (fromIntegral $ fromSing s :: Int32)) t1 t2
 
 -- TODO(helq): change [Nat] for [Dim]
@@ -165,11 +169,11 @@ reduceMean :: forall (shape::[Nat]) (phs::[(Symbol,[Nat],Type)]) a v.
 reduceMean (Tensor t) = Tensor $ TF.reduceMean t
 
 -- TODO(helq): change [Nat] for [Dim]
-softmaxCrossEntropyWithLogits :: (TF.OneOf '[Word16, Double, Float] a,
-                                  addphs ~ UnionPlaceholder phs1 phs2)
+softmaxCrossEntropyWithLogits :: (TF.OneOf '[Word16, Double, Float] a)
                               => Tensor '[batchSize, n] phs1 v'1 a
                               -> Tensor '[batchSize, n] phs2 v'2 a
-                              -> (Tensor '[batchSize] addphs Build a, Tensor '[batchSize, n] addphs Build a)
+                              -> (Tensor '[batchSize] (UnionPlaceholder phs1 phs2) Build a,
+                                  Tensor '[batchSize, n] (UnionPlaceholder phs1 phs2) Build a)
 softmaxCrossEntropyWithLogits (Tensor feats) (Tensor labels) = (Tensor loss, Tensor backprop)
   where (loss, backprop) = TF.softmaxCrossEntropyWithLogits feats labels
 
@@ -203,7 +207,7 @@ square :: TF.OneOf '[(Complex Double), (Complex Float), Int32, Int64, Word16, Do
 square (Tensor t) = Tensor (TF.square t)
 
 reshape :: forall t shape1 shape2 phs v.
-           (TF.TensorType t, ShapeProduct shape1 ~ ShapeProduct shape2, KnownNats shape2)
+           (TF.TensorType t, Product shape1 ~ Product shape2, KnownNats shape2)
         => Tensor shape1 phs v t
         -> Tensor shape2 phs Build t
 reshape (Tensor t) = Tensor $ TF.reshape t $ TF.vector
@@ -217,5 +221,5 @@ sigmoid (Tensor t) = Tensor (TF.sigmoid t)
 shape :: forall t shape phs v.
          (TF.TensorType t, KnownNats shape) -- , TF.OneOf '[Int32, Int64] out_type
        => Tensor shape phs v t
-       -> Tensor '[KnownNatListLength shape] phs Build Int32
+       -> Tensor '[Length shape] phs Build Int32
 shape (Tensor t) = Tensor (TF.shape t)

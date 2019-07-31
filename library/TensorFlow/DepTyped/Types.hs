@@ -33,13 +33,13 @@ import           Data.Kind (Type)
 
 import qualified TensorFlow.Types as TF (TensorDataType, TensorData, TensorType, encodeTensorData, Shape(Shape))
 
-import           TensorFlow.DepTyped.Base (KnownNats, NatList, ShapeProduct)
+import           TensorFlow.DepTyped.Base (KnownNats, NatList, Product)
 import           Data.Singletons (fromSing, sing)
 
 newtype TensorData (n :: Symbol) (s :: [Nat]) (a :: Type) = TensorData {unTensorData :: TF.TensorData a}
 
 encodeTensorData :: forall a (name :: Symbol) (shape :: [Nat]) (n :: Nat).
-                 (TF.TensorType a, ShapeProduct shape ~ n, KnownNats shape, TF.TensorDataType VN.Vector a)
+                 (TF.TensorType a, Product shape ~ n, KnownNats shape, TF.TensorDataType VN.Vector a)
                  => Vector n a
                  -> TensorData name shape a
 encodeTensorData v = TensorData (TF.encodeTensorData shape $ fromSized v :: TF.TensorData a)
