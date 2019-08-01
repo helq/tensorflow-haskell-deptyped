@@ -3,9 +3,10 @@
 
 module Main where
 
+import Control.Monad (forM_)
 import System.Random (randomIO)
 import Data.Int (Int32)
-import Data.Vector.Sized (Vector, replicateM, fromTuple, index, empty)
+import Data.Vector.Sized (Vector, replicateM, fromTuple, index, empty, toList)
 
 import Test.HUnit (assertEqual)
 import Test.HUnit.Approx (assertApproxEqual)
@@ -45,15 +46,33 @@ testSigmoid = testCase "DepTyped Op Sigmoid" $ do
   assertApproxEqual "sigmoid(1)"     0.0001 0.73105857 $ index result 3
   assertApproxEqual "sigmoid(1000)"  0.0001 1.0        $ index result 4
 
-testMatMult :: Test
-testMatMult = testCase "DepTyped Op MatMul" $ do
+helperMatMul :: Int -> Int -> Int -> Int -> [Float] -> [Float] -> [Float] -> IO ()
+helperMatMul batchSize is ks js vector1 vector2 result =
+  forM_ [(m, i, j) | m <- [0..batchSize - 1], i <- [0..is - 1], j <- [0..js - 1]] $ \(m, i, j) -> do
+    let l1 = [vector1 !! (m * is * ks + i * ks + k) | k <- [0..ks - 1]]
+    let l2 = [vector2 !! (m * ks * js + k * js + j) | k <- [0..ks - 1]]
+    let expected = sum $ zipWith (*) l1 l2
+    assertApproxEqual "result is correct" 0.0001 expected $ result !! (m * is * js + i * js + j)
+
+testMatMul :: Test
+testMatMul = testCase "DepTyped Op MatMul" $ do
   vector1 <- replicateM randomIO :: IO (Vector 6 Float)
   vector2 <- replicateM randomIO :: IO (Vector 12 Float)
   result :: Vector 8 Float <- TF.runSession $ do
     let tensor1 = TF.constant vector1 :: TF.Tensor '[2, 3] '[] TF.Build Float
     let tensor2 = TF.constant vector2 :: TF.Tensor '[3, 4] '[] TF.Build Float
     TF.run $ TF.matMul tensor1 tensor2
-  pure ()
+  helperMatMul 1 2 3 4 (toList vector1) (toList vector2) (toList result)
+
+testBatchMatMul :: Test
+testBatchMatMul = testCase "DepTyped Op BatchMatMul" $ do
+  vector1 <- replicateM randomIO :: IO (Vector 12 Float)
+  vector2 <- replicateM randomIO :: IO (Vector 24 Float)
+  result :: Vector 16 Float <- TF.runSession $ do
+    let tensor1 = TF.constant vector1 :: TF.Tensor '[1, 2, 2, 3] '[] TF.Build Float
+    let tensor2 = TF.constant vector2 :: TF.Tensor '[1, 2, 3, 4] '[] TF.Build Float
+    TF.run $ TF.batchMatMul tensor1 tensor2
+  helperMatMul 2 2 3 4 (toList vector1) (toList vector2) (toList result)
 
 testScalar :: Test
 testScalar = testCase "DepTyped Op Scalar" $ do
@@ -70,6 +89,7 @@ main = defaultMain
   [ testReshape
   , testShape
   , testSigmoid
-  , testMatMult
+  , testMatMul
+  , testBatchMatMul
   , testScalar
   ]

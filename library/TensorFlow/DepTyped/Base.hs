@@ -24,6 +24,7 @@
 {-# LANGUAGE NoStarIsType         #-}
 
 module TensorFlow.DepTyped.Base (
+  MatMulResult,
   AddPlaceholder,
   UnionPlaceholder,
   PlaceholderNotInList,
@@ -57,6 +58,17 @@ type KnownNats (xs :: [Nat]) = SingI xs
 type NatSing (n :: Nat) = Sing n
 type NatList (xs :: [Nat]) = Sing xs -- gives us the same as KnownNats
 type SomeNats = SomeSing [Nat]
+
+type family MatMulResult (left :: [Nat]) (right :: [Nat]) = (r :: [Nat]) where
+  MatMulResult l r = MatMulHelper (Reverse l) (Reverse r)
+
+type family MatMulHelper (left :: [Nat]) (right :: [Nat]) = (r :: [Nat]) where
+  MatMulHelper (b:a:tail) (c:b:tail) = Reverse (c:a:tail)
+  MatMulHelper (_:_:tail) (_:_:tail) =
+    TypeError ('Text "Last two dimensions of inputs must conform to matrix multiplication rules")
+  MatMulHelper _ _ =
+    TypeError ('Text "Last two dimensions of inputs must conform to matrix multiplication rules"
+               ':<>: 'Text " and the other dimensions should be equal")
 
 type family AddPlaceholder (name :: Symbol) (shape :: [Nat]) (t :: Type) (placeholders :: [(Symbol, [Nat], Type)]) where
   AddPlaceholder n s t '[] = '[ '(n, s, t) ]

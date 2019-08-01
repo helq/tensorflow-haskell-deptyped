@@ -15,7 +15,7 @@
 
 module TensorFlow.DepTyped (
   KnownNats, NatList, SomeNats,
-  constant, placeholder, add, mul, matMul, argMax, softmax, scalar, oneHot,
+  constant, placeholder, add, mul, matMul, batchMatMul, argMax, softmax, scalar, oneHot,
   reduceMean, softmaxCrossEntropyWithLogits, equal, truncatedNormal, relu,
   sub, cast, square, reshape, shape, sigmoid,
   run, runWithFeeds,
@@ -29,9 +29,11 @@ module TensorFlow.DepTyped (
   Session, runSession
 ) where
 
-import TensorFlow.DepTyped.Ops (constant, placeholder, add, mul, matMul, argMax, softmax, scalar, oneHot,
-                                reduceMean, softmaxCrossEntropyWithLogits, equal, truncatedNormal, relu,
-                                sub, cast, square, reshape, shape, sigmoid)
+import TensorFlow.DepTyped.Ops (
+    constant, placeholder, add, mul, matMul, batchMatMul, argMax, softmax, scalar, oneHot,
+    reduceMean, softmaxCrossEntropyWithLogits, equal, truncatedNormal, relu,
+    sub, cast, square, reshape, shape, sigmoid
+  )
 import TensorFlow.DepTyped.Session (run, runWithFeeds)
 import TensorFlow.DepTyped.Tensor (Tensor, Placeholder, Feed(Feed), FeedList(NilFeedList,(:~~)), render, feed)
 import TensorFlow.DepTyped.Types (TensorData(TensorData, unTensorData), encodeTensorData)

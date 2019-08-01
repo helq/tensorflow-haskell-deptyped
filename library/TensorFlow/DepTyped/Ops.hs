@@ -29,6 +29,7 @@ module TensorFlow.DepTyped.Ops (
   add,
   mul,
   matMul,
+  batchMatMul,
   argMax,
   softmax,
   scalar,
@@ -61,7 +62,7 @@ import qualified TensorFlow.Ops as TF (
     equal, truncatedNormal, vector, mul, relu, sub, cast, abs, sign,
     neg, reshape, shape
   )
-import qualified TensorFlow.GenOps.Core as TF (square, sigmoid)
+import qualified TensorFlow.GenOps.Core as TF (square, sigmoid, batchMatMul)
 import qualified TensorFlow.Types as TF (TensorType, Shape(Shape), type OneOf)
 --import qualified TensorFlow.Tensor as TF (Tensor)
 import           TensorFlow.Tensor (Value)
@@ -69,7 +70,7 @@ import           TensorFlow.Build (Build, MonadBuild)
 
 import           TensorFlow.DepTyped.Base (
     NatSing, KnownNat, KnownNats, NatList, Product, UnionPlaceholder,
-    BroadcastShapes, RemoveAxisFromShape, type (++), Length
+    BroadcastShapes, RemoveAxisFromShape, type (++), Length, MatMulResult,
   )
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor), Placeholder)
 import           Data.Singletons (fromSing, sing)
@@ -130,6 +131,15 @@ matMul :: forall (n :: Nat) (i :: Nat) (o :: Nat)
        -> Tensor '[i, o] q v'2 a
        -> Tensor '[n, o] (UnionPlaceholder p q) Build a
 matMul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.matMul` t2)
+
+batchMatMul :: forall (shapeLeft :: [Nat]) (shapeRight :: [Nat])
+          (p :: [(Symbol, [Nat], Type)]) (q :: [(Symbol, [Nat], Type)])
+          a v'1 v'2 .
+          (TF.OneOf '[(Complex Double), (Complex Float), Int32, Word16, Double, Float] a)
+       => Tensor shapeLeft p v'1 a
+       -> Tensor shapeRight q v'2 a
+       -> Tensor (MatMulResult shapeLeft shapeRight) (UnionPlaceholder p q) Build a
+batchMatMul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.batchMatMul` t2)
 
 -- TODO(helq): change [Nat] for [Dim]
 argMax :: forall (n::Nat) (shapeInput::[Nat]) (phs::[(Symbol,[Nat],Type)]) t output_type v.
