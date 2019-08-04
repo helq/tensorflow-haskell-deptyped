@@ -20,13 +20,16 @@
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE GADTs                #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 
 module TensorFlow.DepTyped.NN (
+  Batch(Batch),
   sigmoidCrossEntropyWithLogits
 ) where
 
+import           Numeric.Natural (Natural)
 import           GHC.TypeLits (Nat, Symbol)
 import           Data.Kind (Type)
 
@@ -36,10 +39,17 @@ import qualified TensorFlow.NN as TF (sigmoidCrossEntropyWithLogits)
 import           TensorFlow.Tensor (Value)
 import           TensorFlow.Build (MonadBuild)
 
-import           TensorFlow.DepTyped.Base (UnionPlaceholder)
+import           TensorFlow.DepTyped.Base
 import           TensorFlow.DepTyped.Tensor (Tensor(Tensor))
 
 
+data Batch shape phs a t where
+ Batch ::
+  forall (n :: Nat) (shape :: [Nat]) phs a (t :: Type).
+  (KnownNats shape) =>
+  NatSing n ->
+  Tensor (n : shape) phs a t ->
+  Batch shape phs a t
 
 sigmoidCrossEntropyWithLogits :: forall (phs1::[(Symbol,[Nat],Type)]) (phs2::[(Symbol,[Nat],Type)]) a s m.
            (MonadBuild m, TF.OneOf '[Float, Double] a, TF.TensorType a, Num a)

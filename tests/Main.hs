@@ -3,6 +3,8 @@
 
 module Main where
 
+import NN
+
 import Control.Monad (forM_)
 import System.Random (randomIO)
 import Data.Int (Int32)
@@ -17,7 +19,7 @@ import qualified TensorFlow.DepTyped as TF
 
 testReshape :: Test
 testReshape = testCase "DepTyped Op Reshape" $ do
-  vector <- replicateM randomIO :: IO (Vector 100 Float)
+  vector :: Vector 100 Float <- replicateM randomIO
   result :: Vector 100 Float <- TF.runSession $ do
     let tensor = TF.constant vector :: TF.Tensor '[100] '[] TF.Build Float
     let reshaped = TF.reshape tensor :: TF.Tensor '[10, 10] '[] TF.Build Float
@@ -27,7 +29,7 @@ testReshape = testCase "DepTyped Op Reshape" $ do
 
 testShape :: Test
 testShape = testCase "DepTyped Op Shape" $ do
-  vector <- replicateM randomIO :: IO (Vector 60 Float)
+  vector :: Vector 60 Float <- replicateM randomIO
   shape :: Vector 3 Int32 <- TF.runSession $ do
     let tensor = TF.constant vector :: TF.Tensor '[3, 4, 5] '[] TF.Build Float
     TF.run $ TF.shape tensor
@@ -56,8 +58,8 @@ helperMatMul batchSize is ks js vector1 vector2 result =
 
 testMatMul :: Test
 testMatMul = testCase "DepTyped Op MatMul" $ do
-  vector1 <- replicateM randomIO :: IO (Vector 6 Float)
-  vector2 <- replicateM randomIO :: IO (Vector 12 Float)
+  vector1 :: Vector 6 Float <- replicateM randomIO
+  vector2 :: Vector 12 Float <- replicateM randomIO
   result :: Vector 8 Float <- TF.runSession $ do
     let tensor1 = TF.constant vector1 :: TF.Tensor '[2, 3] '[] TF.Build Float
     let tensor2 = TF.constant vector2 :: TF.Tensor '[3, 4] '[] TF.Build Float
@@ -66,8 +68,8 @@ testMatMul = testCase "DepTyped Op MatMul" $ do
 
 testBatchMatMul :: Test
 testBatchMatMul = testCase "DepTyped Op BatchMatMul" $ do
-  vector1 <- replicateM randomIO :: IO (Vector 12 Float)
-  vector2 <- replicateM randomIO :: IO (Vector 24 Float)
+  vector1 :: Vector 12 Float <- replicateM randomIO
+  vector2 :: Vector 24 Float <- replicateM randomIO
   result :: Vector 16 Float <- TF.runSession $ do
     let tensor1 = TF.constant vector1 :: TF.Tensor '[1, 2, 2, 3] '[] TF.Build Float
     let tensor2 = TF.constant vector2 :: TF.Tensor '[1, 2, 3, 4] '[] TF.Build Float
@@ -85,7 +87,8 @@ testScalar = testCase "DepTyped Op Scalar" $ do
 
 
 main :: IO ()
-main = defaultMain
+main = defaultMain $
+  testsNN ++
   [ testReshape
   , testShape
   , testSigmoid

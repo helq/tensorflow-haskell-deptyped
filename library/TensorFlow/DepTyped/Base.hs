@@ -36,18 +36,23 @@ module TensorFlow.DepTyped.Base (
   KnownNats,
   NatSing,
   NatList,
+  SomeNat,
   SomeNats,
   -- Reexports
   type (++),
   Length,
   Product,
+  SomeSing(..),
+  toSing,
+  withKnownNat,
 ) where
 
 import           GHC.TypeLits (Nat, type (*), Symbol, TypeError, ErrorMessage(Text, ShowType, (:<>:)), type (-), type (+))
+import           Data.Singletons (SingI, SomeSing(..), Sing, toSing)
 import           Data.Singletons.Prelude (type If, type (<), type (>), type (||), type (==), type Reverse, type (++))
 import           Data.Singletons.Prelude.Foldable (type Length, type Product)
+import Data.Singletons.TypeLits (withKnownNat)
 import           Data.Kind (Constraint, Type)
-import           Data.Singletons (SingI, SomeSing, Sing)
 
 --data Dim = D Nat | NoDim Symbol
 
@@ -57,6 +62,7 @@ type KnownNat (n :: Nat) = SingI n
 type KnownNats (xs :: [Nat]) = SingI xs
 type NatSing (n :: Nat) = Sing n
 type NatList (xs :: [Nat]) = Sing xs -- gives us the same as KnownNats
+type SomeNat = SomeSing Nat
 type SomeNats = SomeSing [Nat]
 
 type family MatMulResult (left :: [Nat]) (right :: [Nat]) = (r :: [Nat]) where
