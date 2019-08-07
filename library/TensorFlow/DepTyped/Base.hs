@@ -123,8 +123,10 @@ type family SortPlaceholderList' (phs :: [(Symbol, [Nat], Type)])
 -- TODO(helq): change [Nat] for [Dim]
 type family BroadcastShapes (shape1::[Nat]) (shape2::[Nat]) :: [Nat] where
   BroadcastShapes shape shape = shape
-  BroadcastShapes '[1] shape2 = shape2 -- this base cases are necessary to allow things like randomParam in mnist-deptyped example
-  BroadcastShapes shape1 '[1] = shape1
+  -- Base cases
+  BroadcastShapes '[] shape2 = shape2
+  BroadcastShapes shape1 '[] = shape1
+  -- Recursive case
   BroadcastShapes shape1 shape2 = Reverse (BroadcastShapes' (Reverse shape1) (Reverse shape2) shape1 shape2)
 
 type family BroadcastShapes' (revshape1::[Nat]) (revshape2::[Nat]) (shape1::[Nat]) (shape2::[Nat]) :: [Nat] where

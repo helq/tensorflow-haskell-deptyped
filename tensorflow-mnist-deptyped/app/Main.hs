@@ -102,16 +102,14 @@ createModel = do
   -- Hidden layer.
   hiddenWeights <- TFD.initializedVariable =<< randomParam' @'[28*28, 500] numPixels
   hiddenBiases  <- TFD.zeroInitializedVariable @'[500]
-  -- TODO(helq): investigate why `mulHiddenZ` needs explicetely a type annotation, when it can alone deduce it
-  -- A possible solution is to add another special case to BroadcastShapes (not very pretty)
-  let mulHiddenZ = TFD.matMul @'[100, 500] images (TFD.readValue hiddenWeights)
+  let mulHiddenZ = TFD.matMul images (TFD.readValue hiddenWeights)
       hiddenZ    = mulHiddenZ `TFD.add` (TFD.readValue hiddenBiases)
   let hidden = TFD.relu hiddenZ
 
   ---- Logits.
   logitWeights <- TFD.initializedVariable =<< randomParam' @'[500, NumLabels] numUnits
   logitBiases  <- TFD.zeroInitializedVariable @'[NumLabels]
-  let logitsZ = TFD.matMul @[100, NumLabels] hidden (TFD.readValue logitWeights)
+  let logitsZ = TFD.matMul hidden (TFD.readValue logitWeights)
       logits  = logitsZ `TFD.add` TFD.readValue logitBiases
       prediction = TFD.argMax (sing :: Sing 1) (TFD.softmax logits)
   predict <- TFD.render @_ @_ @Int32 @TF.Build prediction

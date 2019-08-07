@@ -78,8 +78,8 @@ import           Data.Singletons (fromSing, sing)
 -- This instance allows us to write "simpler" code when we want to create a constant vector with ease
 -- e.g.,
 -- do
---    w <- TFD.initializedVariable @'[1] 0
--- w has type "Tensor '[1] '[] Build a"
+--    w <- TFD.initializedVariable @'[] 0
+-- w has type "Tensor '[] '[] Build a"
 instance ( TF.TensorType a
          , Num a
          , v ~ Build
@@ -123,13 +123,13 @@ mul :: TF.OneOf '[(Complex Double), (Complex Float), Int16, Int32, Int64, Int8, 
 mul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.mul` t2)
 
 -- TODO(helq): change [Nat] for [Dim]
-matMul :: forall (n :: Nat) (i :: Nat) (o :: Nat)
+matMul :: forall (shapeLeft :: [Nat]) (shapeRight :: [Nat])
           (p :: [(Symbol, [Nat], Type)]) (q :: [(Symbol, [Nat], Type)])
           a v'1 v'2 .
           (TF.OneOf '[(Complex Double), (Complex Float), Int32, Word16, Double, Float] a)
-       => Tensor '[n, i] p v'1 a
-       -> Tensor '[i, o] q v'2 a
-       -> Tensor '[n, o] (UnionPlaceholder p q) Build a
+       => Tensor shapeLeft p v'1 a
+       -> Tensor shapeRight q v'2 a
+       -> Tensor (MatMulResult shapeLeft shapeRight) (UnionPlaceholder p q) Build a
 matMul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.matMul` t2)
 
 batchMatMul :: forall (shapeLeft :: [Nat]) (shapeRight :: [Nat])
@@ -165,8 +165,8 @@ oneHot :: (TF.TensorType t,
            KnownNat n,
            TF.OneOf '[Int32, Int64, Word8] tI)
        => NatSing n
-       -> Tensor '[1] '[] v'2 t
-       -> Tensor '[1] '[] v'3 t
+       -> Tensor '[] '[] v'2 t
+       -> Tensor '[] '[] v'3 t
        -> Tensor shape phs v'1 tI
        -> Tensor (shape ++ '[n]) phs Build t
 oneHot s (Tensor t1) (Tensor t2) (Tensor tinput) = Tensor $ TF.oneHot tinput (TF.scalar (fromIntegral $ fromSing s :: Int32)) t1 t2
@@ -175,7 +175,7 @@ oneHot s (Tensor t1) (Tensor t2) (Tensor tinput) = Tensor $ TF.oneHot tinput (TF
 reduceMean :: forall (shape::[Nat]) (phs::[(Symbol,[Nat],Type)]) a v.
               TF.OneOf '[Double, Float, Complex Float, Complex Double] a
            => Tensor shape phs v a
-           -> Tensor '[1] phs Build a
+           -> Tensor '[] phs Build a
 reduceMean (Tensor t) = Tensor $ TF.reduceMean t
 
 -- TODO(helq): change [Nat] for [Dim]

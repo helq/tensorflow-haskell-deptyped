@@ -115,7 +115,7 @@ main9 = runSession $ do
       (mulTensor2 :: Tensor '[1,2,4,3] '[] Build Float) = constant3 `mul` constant4
   mulresult2 <- run mulTensor2
   let (constant5  :: Tensor '[2,2,3] '[] Build Float) = constant . fromJust $ fromList [1,2,3,4,1,2,3,4,1,2,3,4]
-      (constant6  :: Tensor     '[1] '[] Build Float) = scalar 3.7
+      (constant6  :: Tensor      '[] '[] Build Float) = scalar 3.7
       (mulTensor3 :: Tensor '[2,2,3] '[] Build Float) = constant5 `mul` constant6
   mulresult3 <- run mulTensor3
   return (mulresult1, mulresult2, mulresult3)

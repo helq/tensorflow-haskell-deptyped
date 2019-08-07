@@ -72,8 +72,8 @@ fit xData yData = TF.runSession $ do
     let x = TFD.constant @'[n] xData
         y = TFD.constant @'[n] yData
     -- Create scalar variables for slope and intercept.
-    w <- TFD.initializedVariable @'[1] 0
-    b <- TFD.initializedVariable @'[1] 0
+    w <- TFD.initializedVariable @'[] 0
+    b <- TFD.initializedVariable @'[] 0
     -- Define the loss function.
     let yHat = (x `TFD.mul` TFD.readValue w) `TFD.add` TFD.readValue b
         loss = TFD.square (yHat `TFD.sub` y)
