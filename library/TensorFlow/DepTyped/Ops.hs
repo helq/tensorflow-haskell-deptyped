@@ -123,13 +123,13 @@ mul :: TF.OneOf '[(Complex Double), (Complex Float), Int16, Int32, Int64, Int8, 
 mul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.mul` t2)
 
 -- TODO(helq): change [Nat] for [Dim]
-matMul :: forall (shapeLeft :: [Nat]) (shapeRight :: [Nat])
+matMul :: forall (n :: Nat) (o :: Nat) (i :: Nat)
           (p :: [(Symbol, [Nat], Type)]) (q :: [(Symbol, [Nat], Type)])
           a v'1 v'2 .
           (TF.OneOf '[(Complex Double), (Complex Float), Int32, Word16, Double, Float] a)
-       => Tensor shapeLeft p v'1 a
-       -> Tensor shapeRight q v'2 a
-       -> Tensor (MatMulResult shapeLeft shapeRight) (UnionPlaceholder p q) Build a
+       => Tensor '[n, i] p v'1 a
+       -> Tensor '[i, o] q v'2 a
+       -> Tensor '[n, o] (UnionPlaceholder p q) Build a
 matMul (Tensor t1) (Tensor t2) = Tensor (t1 `TF.matMul` t2)
 
 batchMatMul :: forall (shapeLeft :: [Nat]) (shapeRight :: [Nat])

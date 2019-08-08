@@ -102,14 +102,15 @@ createModel = do
   -- Hidden layer.
   hiddenWeights <- TFD.initializedVariable =<< randomParam' @'[28*28, 500] numPixels
   hiddenBiases  <- TFD.zeroInitializedVariable @'[500]
-  let mulHiddenZ = TFD.matMul images (TFD.readValue hiddenWeights)
+  -- TODO(helq): investigate why `mulHiddenZ` needs a explicit type annotation.
+  let mulHiddenZ = TFD.matMul @_ @500 images (TFD.readValue hiddenWeights)
       hiddenZ    = mulHiddenZ `TFD.add` (TFD.readValue hiddenBiases)
   let hidden = TFD.relu hiddenZ
 
   ---- Logits.
   logitWeights <- TFD.initializedVariable =<< randomParam' @'[500, NumLabels] numUnits
   logitBiases  <- TFD.zeroInitializedVariable @'[NumLabels]
-  let logitsZ = TFD.matMul hidden (TFD.readValue logitWeights)
+  let logitsZ = TFD.matMul @_ @NumLabels hidden (TFD.readValue logitWeights)
       logits  = logitsZ `TFD.add` TFD.readValue logitBiases
       prediction = TFD.argMax (sing :: Sing 1) (TFD.softmax logits)
   predict <- TFD.render @_ @_ @Int32 @TF.Build prediction
